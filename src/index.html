@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Studio</title>
+  <link rel="stylesheet" href="vendor/cropper.min.css">
+  <style>
+    :root {
+      --bg: #090a0d;
+      --card: rgba(22, 24, 30, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-sub: #717684;
+      --accent: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 980px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .viewport {
+      position: relative;
+      flex: 1;
+      min-height: 380px;
+      background: #0e1015 radial-gradient(#1e212b 1px, transparent 1px);
+      background-size: 20px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+    }
+
+    .dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .dropzone svg {
+      width: 48px;
+      height: 48px;
+      fill: var(--text-sub);
+      transition: all 0.2s ease;
+    }
+
+    .dropzone:hover svg {
+      transform: translateY(-2px);
+      fill: var(--text-main);
+    }
+
+    .dropzone-title { font-size: 15px; font-weight: 500; }
+    .dropzone-sub { font-size: 12px; color: var(--text-sub); }
+
+    .control-dock {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .segmented-control {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 3px;
+      border-radius: 8px;
+      gap: 2px;
+    }
+
+    .segment-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .segment-btn:hover { color: var(--text-main); }
+    .segment-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .meta-pill {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #999ea8;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1px solid var(--card-border);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .btn-secondary:hover { color: var(--text-main); border-color: rgba(255, 255, 255, 0.2); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Cropper 样式优化 */
+    .cropper-view-box { outline: 1.5px solid #ffffff !important; }
+    .cropper-line { background-color: transparent !important; }
+    .cropper-dashed { border: 1px dashed rgba(255, 255, 255, 0.5) !important; }
+    .cropper-point { background-color: #ffffff !important; width: 6px !important; height: 6px !important; }
+    .cropper-modal { background-color: #000000 !important; opacity: 0.75 !important; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="viewport" id="dropArea">
+    <div class="dropzone" id="dropzonePrompt">
+      <svg viewBox="0 0 24 24">
+        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+      </svg>
+      <div class="dropzone-title">拖拽动图至此，或点击选择本地文件</div>
+      <div class="dropzone-sub">完全在本地极速处理，无数据上传</div>
+    </div>
+    <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
+  </div>
+
+  <div class="control-dock">
+    <div class="segmented-control">
+      <button class="segment-btn active" id="btn16x9" onclick="applySmartRatio(16/9, this)">16 : 9</button>
+      <button class="segment-btn" onclick="applySmartRatio(1, this)">1 : 1</button>
+      <button class="segment-btn" onclick="applySmartRatio(4/3, this)">4 : 3</button>
+      <button class="segment-btn" onclick="applySmartRatio(NaN, this)">自由</button>
+    </div>
+
+    <div class="meta-pill" id="metaInfo">0 × 0 px</div>
+
+    <div class="action-group">
+      <button class="btn-secondary" id="replaceBtn">更换动图</button>
+      <button class="btn-primary" id="processBtn" disabled>导出 GIF</button>
+    </div>
+  </div>
+</div>
+
+<!-- 本地离线加载脚本 -->
+<script src="vendor/cropper.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
