@@ -1,5 +1,5 @@
 {
-  "name": "Video studio",
+  "name": "video-studio",
   "version": "1.0.0",
   "description": "视频处理工具",
   "main": "main.js",
@@ -24,7 +24,8 @@
     "files": [
       "main.js",
       "preload.js",
-      "src/**/*"
+      "src/**/*",
+      "resources/**/*"
     ],
     "extraResources": [
       {
@@ -34,7 +35,19 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "icon": "resources/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico"
     },
     "mac": {
       "target": "dmg"

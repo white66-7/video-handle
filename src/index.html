@@ -5,9 +5,9 @@
   <title>Video Studio</title>
   <link rel="stylesheet" href="vendor/cropper.min.css">
   <style>
-    :root {
+:root {
       --bg: #090a0d;
-      --card: rgba(22, 24, 30, 0.75);
+      --card: #12141a;
       --card-border: rgba(255, 255, 255, 0.08);
       --text-main: #f3f4f6;
       --text-sub: #717684;
@@ -20,37 +20,39 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text-main);
+      width: 100vw;
       height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      overflow: hidden;
+      /* 移除原先的 padding: 24px 居中限制 */
     }
 
     .app-container {
       width: 100%;
-      max-width: 980px;
       height: 100%;
+      max-width: none; /* 移除 980px 限制，完全贴合窗口 */
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 0; /* 消除功能区与视口间的悬浮空隙 */
     }
 
     .viewport {
       position: relative;
       flex: 1;
-      min-height: 380px;
-      background: #0e1015 radial-gradient(#1e212b 1px, transparent 1px);
+      width: 100%;
+      height: 100%;
+      background: #0b0c10 radial-gradient(#1e212b 1px, transparent 1px);
       background-size: 20px 20px;
-      border-radius: 14px;
-      border: 1px solid var(--card-border);
+      /* 去掉圆角和阴影，与窗口边缘无缝贴合 */
+      border: none;
+      border-bottom: 1px solid var(--card-border);
+      border-radius: 0;
+      box-shadow: none;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
     }
 
     .dropzone {
@@ -76,15 +78,16 @@
       fill: var(--text-main);
     }
 
-    .dropzone-title { font-size: 15px; font-weight: 500; }
-    .dropzone-sub { font-size: 12px; color: var(--text-sub); }
+    .dropzone-title { font-size: 14px; font-weight: 500; }
 
+    /* 功能底栏：紧贴窗口底部与两侧 */
     .control-dock {
+      flex-shrink: 0;
+      height: 58px;
       background: var(--card);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 12px 18px;
+      border-top: 1px solid var(--card-border);
+      border-radius: 0; /* 去掉圆角贴紧底部 */
+      padding: 0 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -127,6 +130,85 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
+    /* 底栏中部的信息胶囊组 */
+    .dock-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 编码引擎状态指示：绿=硬件加速，橙=CPU 回退 */
+    .encoder-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #999ea8;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .encoder-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-sub);
+      flex-shrink: 0;
+    }
+
+    .encoder-pill.hw {
+      color: #6ee7a8;
+      border-color: rgba(110, 231, 168, 0.25);
+      background: rgba(110, 231, 168, 0.07);
+    }
+
+    .encoder-pill.hw .dot {
+      background: #6ee7a8;
+      box-shadow: 0 0 6px rgba(110, 231, 168, 0.8);
+    }
+
+    .encoder-pill.cpu {
+      color: #f0b866;
+      border-color: rgba(240, 184, 102, 0.25);
+      background: rgba(240, 184, 102, 0.07);
+    }
+
+    .encoder-pill.cpu .dot { background: #f0b866; }
+
+    /* 顶部告警条：只在硬件加速不可用时出现 */
+    .notice {
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 16px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #f0b866;
+      background: rgba(240, 184, 102, 0.1);
+      border-top: 1px solid rgba(240, 184, 102, 0.25);
+    }
+
+    .notice-text { flex: 1; word-break: break-word; }
+
+    .notice-close {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.55;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .notice-close:hover { opacity: 1; }
+
     .action-group {
       display: flex;
       align-items: center;
@@ -139,8 +221,8 @@
       border: 1px solid var(--card-border);
       font-size: 13px;
       font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 7px 16px;
+      border-radius: 6px;
       cursor: pointer;
       transition: 0.15s;
     }
@@ -153,15 +235,14 @@
       border: none;
       font-size: 13px;
       font-weight: 600;
-      padding: 8px 20px;
-      border-radius: 8px;
+      padding: 7px 20px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .btn-primary:hover:not(:disabled) {
       background: #e5e7eb;
-      transform: translateY(-1px);
     }
 
     .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -182,10 +263,14 @@
       <svg viewBox="0 0 24 24">
         <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
       </svg>
-      <div class="dropzone-title">拖拽动图至此，或点击选择本地文件</div>
-      <div class="dropzone-sub">完全在本地极速处理，无数据上传</div>
+      <div class="dropzone-title">选择文件</div>
     </div>
     <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
+  </div>
+
+  <div class="notice" id="notice" style="display: none;">
+    <span class="notice-text" id="noticeText"></span>
+    <button class="notice-close" id="noticeClose" title="关闭">×</button>
   </div>
 
   <div class="control-dock">
@@ -196,16 +281,21 @@
       <button class="segment-btn" onclick="applySmartRatio(NaN, this)">自由</button>
     </div>
 
-    <div class="meta-pill" id="metaInfo">0 × 0 px</div>
+    <div class="dock-pills">
+      <div class="meta-pill" id="metaInfo">0 X 0 px</div>
+      <div class="encoder-pill" id="encoderInfo">
+        <span class="dot"></span>
+        <span id="encoderLabel">检测中…</span>
+      </div>
+    </div>
 
     <div class="action-group">
       <button class="btn-secondary" id="replaceBtn">更换动图</button>
-      <button class="btn-primary" id="processBtn" disabled>导出 GIF</button>
+      <button class="btn-primary" id="processBtn" disabled>导出</button>
     </div>
   </div>
 </div>
 
-<!-- 本地离线加载脚本 -->
 <script src="vendor/cropper.min.js"></script>
 <script src="app.js"></script>
 </body>

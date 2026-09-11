@@ -1,0 +1,59 @@
+<div align="center">
+
+# Cropper Studio
+
+**基于 Electron + FFmpeg 的轻量级本地媒体裁切工具**
+
+[![Electron](https://img.shields.io/badge/Electron-Latest-47848F.svg?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-Core-007808.svg?style=flat-square&logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933.svg?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+
+<p align="center">
+  <a href="#项目概述">项目概述</a> •
+  <a href="#技术栈">技术栈</a> •
+  <a href="#本地开发与构建">本地开发与构建</a>
+</p>
+
+---
+
+</div>
+
+## 项目概述
+
+**Cropper Studio**：因为平时经常需要处理一些视频和动图，苦于没有流畅顺滑的在线网站和轻量应用，所以自己动手开发了这款图形化软件界面。
+
+---
+
+## 技术栈
+
+| 领域 | 核心技术 / 依赖 |
+| :--- | :--- |
+| **桌面运行时** | Electron |
+| **转码引擎** | FFmpeg |
+| **选区交互** | Cropper.js |
+| **界面与样式** | Vanilla JS + Modern CSS3 |
+| **系统调用** | Node.js (Child Process, Path, FS) |
+
+---
+
+## 本地开发与构建
+
+### 环境准备
+- Node.js 18.0 或更高版本
+- Git
+- 确保 `bin/` 目录下已放置对应系统的 `ffmpeg` 二进制文件
+
+### 安装与运行
+
+```bash
+# 1. 克隆项目仓库
+git clone https://github.com/white66-7/video-handle.git
+cd video-handle
+
+# 2. 安装依赖包
+npm install
+
+# 3. 启动本地桌面客户端开发环境
+npm start
