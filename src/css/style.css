@@ -1,0 +1,726 @@
+:root {
+  --bg: #090a0d;
+  --card: #12141a;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f3f4f6;
+  --text-sub: #717684;
+  --accent: #ffffff;
+  --player-accent: #44bfa3; /* 薄荷绿高光 */
+  --level-color: #92ff77;   /* 荧光绿音量高光 */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* ---------------- 左侧功能栏 ---------------- */
+.sidebar {
+  width: 190px;
+  height: 100%;
+  background: #0d0f14;
+  border-right: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.brand-title {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--card-border);
+  letter-spacing: 0.5px;
+}
+
+.brand-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.nav-tabs {
+  flex: 1;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nav-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.nav-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-tab-btn.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid var(--card-border);
+}
+
+/* ---------------- 右侧主处理区域 ---------------- */
+.main-stage {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.workspace-panel {
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+}
+
+.workspace-panel.active {
+  display: flex;
+}
+
+.viewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  background: #0b0c10 radial-gradient(#1e212b 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dropzone svg {
+  width: 48px;
+  height: 48px;
+  fill: var(--text-sub);
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover svg {
+  transform: translateY(-2px);
+  fill: var(--text-main);
+}
+
+.dropzone-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------------- 控制底栏 ---------------- */
+.control-dock {
+  flex-shrink: 0;
+  height: 58px;
+  background: var(--card);
+  border-top: 1px solid var(--card-border);
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.control-dock.disabled {
+  opacity: 0.28;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.6);
+}
+
+.segmented-control {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 3px;
+  border-radius: 8px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.segment-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segment-btn:hover {
+  color: var(--text-main);
+}
+
+.segment-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.meta-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #eceff4;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---------------- 截取底栏 ---------------- */
+#snapshotDock {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px;
+}
+
+/* 1. 左侧按钮舱 */
+.pro-playback-cluster {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cluster-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cluster-btn.step-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.cluster-btn.step-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.cluster-btn.step-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 动效播放开关 */
+.container {
+  --color: #ffffff;
+  --size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  font-size: var(--size);
+  user-select: none;
+  fill: var(--color);
+  width: 34px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.container:hover {
+  background: var(--player-accent);
+  --color: #0d0f14;
+  box-shadow: 0 0 10px rgba(68, 191, 163, 0.45);
+}
+
+.container .play {
+  position: absolute;
+  animation: keyframes-fill 0.3s;
+}
+
+.container .pause {
+  position: absolute;
+  display: none;
+  animation: keyframes-fill 0.3s;
+}
+
+.container input:checked ~ .play {
+  display: none;
+}
+
+.container input:checked ~ .pause {
+  display: block;
+}
+
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+@keyframes keyframes-fill {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 2. 中间时间轴轨道 */
+.audio-controls {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+}
+
+.time-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-sub);
+  min-width: 58px;
+  user-select: none;
+}
+
+.time-label.current-time {
+  text-align: right;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.track-slider {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.track-progress {
+  height: 100%;
+  background-color: var(--player-accent);
+  border-radius: inherit;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.track-pin {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background-color: var(--player-accent);
+  position: absolute;
+  right: -7px;
+  top: -5px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.track-slider:hover .track-pin {
+  transform: scale(1.2);
+}
+
+.native-seeker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+}
+
+/* 3. 音量键与防闪退悬浮调音舱 */
+.audio-volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volume-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  transition: background 0.15s ease;
+}
+
+.volume-btn:hover,
+.audio-volume.is-open .volume-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.volume-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-sub);
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.volume-btn:hover .volume-icon,
+.audio-volume.is-open .volume-icon,
+.audio-volume.is-dragging .volume-icon {
+  color: var(--level-color);
+}
+
+/* 调音面板：支持悬浮安全桥梁与防抖延时 */
+.volume-popup {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  width: 38px;
+  height: 130px;
+  background-color: rgba(18, 20, 26, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 0;
+  opacity: 0;
+  pointer-events: none;
+  /* 移开时等待 0.25s 防抖缓冲，避免鼠标误触闪退 */
+  transition: opacity 0.2s ease 0.25s, transform 0.2s ease 0.25s;
+  z-index: 60;
+}
+
+/* 关键：底部延伸的“隐形安全桥”，连接按钮和浮窗消除盲区 */
+.volume-popup::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -12px;
+  right: -12px;
+  height: 24px;
+  background: transparent;
+}
+
+/* 底部小三角形 */
+.volume-popup::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 5px 0;
+  border-style: solid;
+  border-color: rgba(18, 20, 26, 0.96) transparent transparent;
+}
+
+/* 激活状态：悬浮、点击锁定、拖拽时无延时展开 */
+.audio-volume:hover .volume-popup,
+.audio-volume.is-open .volume-popup,
+.audio-volume.is-dragging .volume-popup {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 0s;
+}
+
+.volume-slider-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.volume-track-slider {
+  width: 6px;
+  height: 100px;
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.volume-track-progress {
+  width: 100%;
+  background-color: var(--level-color);
+  position: absolute;
+  bottom: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 10px rgba(146, 255, 119, 0.5); /* 荧光发光质感 */
+}
+
+.volume-track-pin {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 2px solid var(--level-color);
+  position: absolute;
+  top: -7px;
+  left: -4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.volume-track-slider:hover .volume-track-pin {
+  transform: scale(1.15);
+}
+
+.native-volume-seeker {
+  position: absolute;
+  left: -12px;
+  top: 0;
+  width: 30px;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+  margin: 0;
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+}
+
+/* 4. 操作按钮组 */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-sub);
+  border: 1px solid var(--card-border);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.btn-secondary:hover {
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #f3f4f6;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.22);
+}
+
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---------------- 硬件检测与告警条 ---------------- */
+.encoder-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #999ea8;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.encoder-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-sub);
+  flex-shrink: 0;
+}
+
+.encoder-pill.hw {
+  color: #6ee7a8;
+  border-color: rgba(110, 231, 168, 0.25);
+  background: rgba(110, 231, 168, 0.07);
+}
+
+.encoder-pill.hw .dot {
+  background: #6ee7a8;
+  box-shadow: 0 0 6px rgba(110, 231, 168, 0.8);
+}
+
+.encoder-pill.cpu {
+  color: #f0b866;
+  border-color: rgba(240, 184, 102, 0.25);
+  background: rgba(240, 184, 102, 0.07);
+}
+
+.encoder-pill.cpu .dot {
+  background: #f0b866;
+}
+
+.notice {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #f0b866;
+  background: rgba(20, 18, 15, 0.95);
+  border-bottom: 1px solid rgba(240, 184, 102, 0.25);
+}
+
+.notice-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.notice-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.notice-close:hover {
+  opacity: 1;
+}
+
+/* ---------------- Cropper 样式优化 ---------------- */
+.cropper-bg {
+  background-image: none !important;
+  background-color: #000000 !important;
+}
+
+.cropper-container {
+  background-color: #000000 !important;
+}
+
+.cropper-modal {
+  background-color: #000000 !important;
+  opacity: 0.8 !important;
+}
+
+.cropper-view-box {
+  outline: 1.5px solid #ffffff !important;
+}
+
+.cropper-line {
+  background-color: transparent !important;
+}
+
+.cropper-dashed {
+  border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+}
+
+.cropper-point {
+  background-color: #ffffff !important;
+  width: 6px !important;
+  height: 6px !important;
+}

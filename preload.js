@@ -1,16 +1,18 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 1. 本地文件与系统对话框
+  // 文件路径与原生文件选择框
   getFilePath: (file) => webUtils.getPathForFile(file),
   openGifDialog: () => ipcRenderer.invoke('dialog:open-gif'),
+  openVideoDialog: () => ipcRenderer.invoke('dialog:open-video'),
   showInFolder: (path) => ipcRenderer.invoke('shell:show-item', path),
 
-  // 2. FFmpeg 视频/动图处理
+  // 功能处理：裁切、首帧提取、指定帧截取
   getVideoFrame: (filePath) => ipcRenderer.invoke('video:get-frame', filePath),
   processCrop: (payload) => ipcRenderer.invoke('gif:process-crop', payload),
+  saveSnapshot: (payload) => ipcRenderer.invoke('video:save-snapshot', payload),
 
-  // 3. 硬件配置状态查询与实时监听推送
+  // 硬件配置与状态通知
   getHardwareProfile: () => ipcRenderer.invoke('system:get-hardware-profile'),
   onHardwareProfileUpdated: (callback) => {
     ipcRenderer.on('system:hardware-profile-updated', (_event, profile) => callback(profile));

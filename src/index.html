@@ -1,302 +1,174 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
-  <title>Video Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cropper Studio</title>
   <link rel="stylesheet" href="vendor/cropper.min.css">
-  <style>
-:root {
-      --bg: #090a0d;
-      --card: #12141a;
-      --card-border: rgba(255, 255, 255, 0.08);
-      --text-main: #f3f4f6;
-      --text-sub: #717684;
-      --accent: #ffffff;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text-main);
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      /* 移除原先的 padding: 24px 居中限制 */
-    }
-
-    .app-container {
-      width: 100%;
-      height: 100%;
-      max-width: none; /* 移除 980px 限制，完全贴合窗口 */
-      display: flex;
-      flex-direction: column;
-      gap: 0; /* 消除功能区与视口间的悬浮空隙 */
-    }
-
-    .viewport {
-      position: relative;
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      background: #0b0c10 radial-gradient(#1e212b 1px, transparent 1px);
-      background-size: 20px 20px;
-      /* 去掉圆角和阴影，与窗口边缘无缝贴合 */
-      border: none;
-      border-bottom: 1px solid var(--card-border);
-      border-radius: 0;
-      box-shadow: none;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .dropzone {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-      justify-content: center;
-    }
-
-    .dropzone svg {
-      width: 48px;
-      height: 48px;
-      fill: var(--text-sub);
-      transition: all 0.2s ease;
-    }
-
-    .dropzone:hover svg {
-      transform: translateY(-2px);
-      fill: var(--text-main);
-    }
-
-    .dropzone-title { font-size: 14px; font-weight: 500; }
-
-    /* 功能底栏：紧贴窗口底部与两侧 */
-    .control-dock {
-      flex-shrink: 0;
-      height: 58px;
-      background: var(--card);
-      border-top: 1px solid var(--card-border);
-      border-radius: 0; /* 去掉圆角贴紧底部 */
-      padding: 0 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .segmented-control {
-      display: inline-flex;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 3px;
-      border-radius: 8px;
-      gap: 2px;
-    }
-
-    .segment-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-sub);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .segment-btn:hover { color: var(--text-main); }
-    .segment-btn.active {
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-    }
-
-    .meta-pill {
-      font-family: ui-monospace, Menlo, Consolas, monospace;
-      font-size: 12px;
-      color: #999ea8;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 6px 14px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    /* 底栏中部的信息胶囊组 */
-    .dock-pills {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* 编码引擎状态指示：绿=硬件加速，橙=CPU 回退 */
-    .encoder-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 12px;
-      color: #999ea8;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      cursor: default;
-      white-space: nowrap;
-    }
-
-    .encoder-pill .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-sub);
-      flex-shrink: 0;
-    }
-
-    .encoder-pill.hw {
-      color: #6ee7a8;
-      border-color: rgba(110, 231, 168, 0.25);
-      background: rgba(110, 231, 168, 0.07);
-    }
-
-    .encoder-pill.hw .dot {
-      background: #6ee7a8;
-      box-shadow: 0 0 6px rgba(110, 231, 168, 0.8);
-    }
-
-    .encoder-pill.cpu {
-      color: #f0b866;
-      border-color: rgba(240, 184, 102, 0.25);
-      background: rgba(240, 184, 102, 0.07);
-    }
-
-    .encoder-pill.cpu .dot { background: #f0b866; }
-
-    /* 顶部告警条：只在硬件加速不可用时出现 */
-    .notice {
-      flex-shrink: 0;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 9px 16px;
-      font-size: 12.5px;
-      line-height: 1.5;
-      color: #f0b866;
-      background: rgba(240, 184, 102, 0.1);
-      border-top: 1px solid rgba(240, 184, 102, 0.25);
-    }
-
-    .notice-text { flex: 1; word-break: break-word; }
-
-    .notice-close {
-      background: transparent;
-      border: none;
-      color: inherit;
-      font-size: 17px;
-      line-height: 1;
-      cursor: pointer;
-      opacity: 0.55;
-      padding: 0 4px;
-      flex-shrink: 0;
-    }
-
-    .notice-close:hover { opacity: 1; }
-
-    .action-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--text-sub);
-      border: 1px solid var(--card-border);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 7px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-
-    .btn-secondary:hover { color: var(--text-main); border-color: rgba(255, 255, 255, 0.2); }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 7px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #e5e7eb;
-    }
-
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* Cropper 样式优化 */
-    .cropper-view-box { outline: 1.5px solid #ffffff !important; }
-    .cropper-line { background-color: transparent !important; }
-    .cropper-dashed { border: 1px dashed rgba(255, 255, 255, 0.5) !important; }
-    .cropper-point { background-color: #ffffff !important; width: 6px !important; height: 6px !important; }
-    .cropper-modal { background-color: #000000 !important; opacity: 0.75 !important; }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<div class="app-container">
-  <div class="viewport" id="dropArea">
-    <div class="dropzone" id="dropzonePrompt">
-      <svg viewBox="0 0 24 24">
-        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-      </svg>
-      <div class="dropzone-title">选择文件</div>
-    </div>
-    <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
-  </div>
-
-  <div class="notice" id="notice" style="display: none;">
-    <span class="notice-text" id="noticeText"></span>
-    <button class="notice-close" id="noticeClose" title="关闭">×</button>
-  </div>
-
-  <div class="control-dock">
-    <div class="segmented-control">
-      <button class="segment-btn active" id="btn16x9" onclick="applySmartRatio(16/9, this)">16 : 9</button>
-      <button class="segment-btn" onclick="applySmartRatio(1, this)">1 : 1</button>
-      <button class="segment-btn" onclick="applySmartRatio(4/3, this)">4 : 3</button>
-      <button class="segment-btn" onclick="applySmartRatio(NaN, this)">自由</button>
+  <!-- 左侧功能导航 -->
+  <aside class="sidebar">
+    <div class="brand-title">
+      <img src="../resources/icon.ico" class="brand-icon" alt="icon">
+      <span>Cropper Studio</span>
     </div>
 
-    <div class="dock-pills">
-      <div class="meta-pill" id="metaInfo">0 X 0 px</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab-btn active" id="tabCropBtn">
+        <span>裁切</span>
+      </button>
+      <button class="nav-tab-btn" id="tabSnapshotBtn">
+        <span>截取</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
       <div class="encoder-pill" id="encoderInfo">
         <span class="dot"></span>
         <span id="encoderLabel">检测中…</span>
       </div>
     </div>
+  </aside>
 
-    <div class="action-group">
-      <button class="btn-secondary" id="replaceBtn">更换动图</button>
-      <button class="btn-primary" id="processBtn" disabled>导出</button>
+  <!-- 右侧主处理区域 -->
+  <div class="main-stage">
+
+    <!-- 顶部状态提示栏 -->
+    <div class="notice" id="notice">
+      <span class="notice-text" id="noticeText"></span>
+      <button class="notice-close" id="noticeClose" title="关闭">×</button>
     </div>
-  </div>
-</div>
 
-<script src="vendor/cropper.min.js"></script>
-<script src="app.js"></script>
+    <!-- 1. 裁切独立工作区 -->
+    <div class="workspace-panel active" id="cropWorkspace">
+      <div class="viewport" id="cropDropArea">
+        <div class="dropzone" id="cropDropzonePrompt">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+          </svg>
+          <div class="dropzone-title">选择文件</div>
+        </div>
+        <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
+      </div>
+
+      <div class="control-dock disabled" id="cropDock">
+        <div class="segmented-control">
+          <button class="segment-btn active" id="btn16x9">16 : 9</button>
+          <button class="segment-btn" id="btn1x1">1 : 1</button>
+          <button class="segment-btn" id="btn4x3">4 : 3</button>
+          <button class="segment-btn" id="btnFree">自由</button>
+        </div>
+
+        <div class="meta-pill" id="metaInfo">0 X 0 px</div>
+
+        <div class="action-group">
+          <button class="btn-secondary" id="replaceBtn">更换</button>
+          <button class="btn-primary" id="processBtn" disabled>导出</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 截取独立工作区 -->
+    <div class="workspace-panel" id="snapshotWorkspace">
+      <div class="viewport" id="snapshotDropArea">
+        <div class="dropzone" id="snapshotDropzonePrompt">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+          </svg>
+          <div class="dropzone-title">选择文件</div>
+        </div>
+        <video id="snapshotVideo" style="display: none; max-width: 100%; max-height: 100%; outline: none;"></video>
+      </div>
+
+      <!-- 截取底栏 -->
+      <div class="control-dock disabled" id="snapshotDock">
+        
+        <!-- 左侧：逐帧微调 + 动效播放开关 -->
+        <div class="pro-playback-cluster">
+          <button class="cluster-btn step-btn" id="btnPrevFrame" title="后退一帧 (快捷键: ←)">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M11.354 3.646a.5.5 0 0 1 0 .708L7.207 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z"/>
+            </svg>
+          </button>
+
+          <!-- 动效播放/暂停复选切换容器 -->
+          <label class="container" id="playPauseToggle" title="播放 / 暂停 (快捷键: 空格)">
+            <input type="checkbox" id="btnPlayPause" />
+            <svg class="play" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512">
+              <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"></path>
+            </svg>
+            <svg class="pause" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512">
+              <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"></path>
+            </svg>
+          </label>
+
+          <button class="cluster-btn step-btn" id="btnNextFrame" title="前进一帧 (快捷键: →)">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4.646 3.646a.5.5 0 0 0 0 .708L8.793 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 中间：Green Audio Player 经典时间轴 -->
+        <div class="audio-controls">
+          <span class="time-label current-time" id="currentTime">00:00.00</span>
+          
+          <div class="track-slider" id="timelineSlider">
+            <div class="track-progress" id="videoProgress" style="width: 0%;">
+              <div class="track-pin" id="progressPin"></div>
+            </div>
+            <input type="range" class="native-seeker" id="videoSeeker" min="0" max="100" step="0.001" value="0">
+          </div>
+
+          <span class="time-label total-time" id="totalTime">00:00.00</span>
+        </div>
+
+        <!-- 右侧音量控制：防闪退无缝调音舱 -->
+        <div class="audio-volume" id="volumeWrapper">
+          <button class="volume-btn" id="volumeBtn" type="button" title="音量 (点击锁定展开 / 滚轮微调)">
+            <svg class="volume-icon" viewBox="0 0 24 24" fill="currentColor">
+              <g>
+                <path d="M18.36 19.36a1 1 0 0 1-.705-1.71C19.167 16.148 20 14.142 20 12s-.833-4.148-2.345-5.65a1 1 0 1 1 1.41-1.419C20.958 6.812 22 9.322 22 12s-1.042 5.188-2.935 7.069a.997.997 0 0 1-.705.291z"></path>
+                <path d="M15.53 16.53a.999.999 0 0 1-.703-1.711C15.572 14.082 16 13.054 16 12s-.428-2.082-1.173-2.819a1 1 0 1 1 1.406-1.422A6 6 0 0 1 18 12a6 6 0 0 1-1.767 4.241.996.996 0 0 1-.703.289zM12 22a1 1 0 0 1-.707-.293L6.586 17H4c-1.103 0-2-.897-2-2V9c0-1.103.897-2 2-2h2.586l4.707-4.707A.998.998 0 0 1 13 3v18a1 1 0 0 1-1 1z"></path>
+              </g>
+            </svg>
+          </button>
+
+          <!-- 浮窗内置防脱轨隐形桥 -->
+          <div class="volume-popup" id="volumePopup">
+            <div class="volume-slider-box">
+              <div class="volume-track-slider">
+                <div class="volume-track-progress" id="volumeProgress" style="height: 100%;">
+                  <div class="volume-track-pin" id="volumePin"></div>
+                </div>
+                <input type="range" class="native-volume-seeker" id="volumeSeeker" min="0" max="1" step="0.01" value="1" orient="vertical">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮组 -->
+        <div class="action-group">
+          <button class="btn-secondary" id="snapshotReplaceBtn">更换</button>
+          <button class="btn-primary" id="snapshotBtn" disabled>截取</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="vendor/cropper.min.js"></script>
+  <script src="js/features/crop.js"></script>
+  <script src="js/features/snapshot.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
