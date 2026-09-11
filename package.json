@@ -5,14 +5,20 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac"
   },
-  "keywords": ["gif", "cropper", "electron"],
+  "keywords": [
+    "gif",
+    "cropper",
+    "electron"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^30.0.0",
+    "electron": "^30.5.1",
     "electron-builder": "^24.13.3"
   },
   "build": {
@@ -23,7 +29,12 @@
     },
     "files": [
       "main.js",
+      "main/**/*",
       "preload.js",
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "vendor/**/*",
       "src/**/*",
       "resources/**/*"
     ],
@@ -31,7 +42,9 @@
       {
         "from": "bin/",
         "to": "bin/",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
@@ -39,7 +52,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

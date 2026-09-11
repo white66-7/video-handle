@@ -25,6 +25,12 @@
       <button class="nav-tab-btn" id="tabSnapshotBtn">
         <span>截取</span>
       </button>
+      <button class="nav-tab-btn" id="tabCompressBtn">
+        <span>压缩</span>
+      </button>
+      <button class="nav-tab-btn" id="tabConvertBtn">
+        <span>转换</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -87,10 +93,7 @@
         <video id="snapshotVideo" style="display: none; max-width: 100%; max-height: 100%; outline: none;"></video>
       </div>
 
-      <!-- 截取底栏 -->
       <div class="control-dock disabled" id="snapshotDock">
-        
-        <!-- 左侧：逐帧微调 + 动效播放开关 -->
         <div class="pro-playback-cluster">
           <button class="cluster-btn step-btn" id="btnPrevFrame" title="后退一帧 (快捷键: ←)">
             <svg viewBox="0 0 16 16" fill="currentColor">
@@ -98,7 +101,6 @@
             </svg>
           </button>
 
-          <!-- 动效播放/暂停复选切换容器 -->
           <label class="container" id="playPauseToggle" title="播放 / 暂停 (快捷键: 空格)">
             <input type="checkbox" id="btnPlayPause" />
             <svg class="play" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512">
@@ -116,7 +118,6 @@
           </button>
         </div>
 
-        <!-- 中间：Green Audio Player 经典时间轴 -->
         <div class="audio-controls">
           <span class="time-label current-time" id="currentTime">00:00.00</span>
           
@@ -130,7 +131,6 @@
           <span class="time-label total-time" id="totalTime">00:00.00</span>
         </div>
 
-        <!-- 右侧音量控制：防闪退无缝调音舱 -->
         <div class="audio-volume" id="volumeWrapper">
           <button class="volume-btn" id="volumeBtn" type="button" title="音量 (点击锁定展开 / 滚轮微调)">
             <svg class="volume-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -141,7 +141,6 @@
             </svg>
           </button>
 
-          <!-- 浮窗内置防脱轨隐形桥 -->
           <div class="volume-popup" id="volumePopup">
             <div class="volume-slider-box">
               <div class="volume-track-slider">
@@ -154,12 +153,185 @@
           </div>
         </div>
 
-        <!-- 操作按钮组 -->
         <div class="action-group">
           <button class="btn-secondary" id="snapshotReplaceBtn">更换</button>
           <button class="btn-primary" id="snapshotBtn" disabled>截取</button>
         </div>
+      </div>
+    </div>
 
+    <!-- 3. 压缩独立工作区 (批量转码) -->
+    <div class="workspace-panel" id="compressWorkspace">
+      <div class="viewport compress-viewport" id="compressDropArea">
+        
+        <div class="dropzone" id="compressDropPrompt">
+          <svg viewBox="0 0 24 24">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+          </svg>
+          <div class="dropzone-title">选择文件</div>
+        </div>
+
+        <div class="compress-queue-wrap" id="compressQueueWrap" style="display: none;">
+          <div class="queue-header">
+            <div class="q-col col-name">视频文件 (<span id="queueCount" class="mono-num">0</span>)</div>
+            <div class="q-col col-spec">压制规格</div>
+            <div class="q-col col-status">处理进度</div>
+            <div class="q-col col-op">操作</div>
+          </div>
+          <div class="queue-body" id="compressQueueList"></div>
+        </div>
+
+      </div>
+
+      <div class="control-dock disabled" id="compressDock">
+        <div class="segmented-control" id="compressResGroup">
+          <button class="segment-btn active" data-res="1080p">1080P</button>
+          <button class="segment-btn" data-res="720p">720P</button>
+          <button class="segment-btn" data-res="original">原始尺寸</button>
+        </div>
+
+        <div class="param-cluster">
+          <span class="param-label">压制强度:</span>
+          <div class="crf-slider-box">
+            <input type="range" class="crf-slider" id="compressCrf" min="18" max="35" step="1" value="28">
+          </div>
+          <span class="meta-pill crf-badge" id="crfLabel">CRF 28</span>
+        </div>
+
+        <div class="action-group">
+          <button class="btn-secondary" id="compressAddBtn">添加视频</button>
+          <button class="btn-secondary" id="compressClearBtn">清空</button>
+          <button class="btn-primary" id="compressStartBtn" disabled>开始批量压缩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 转换独立工作区 (Squoosh 实时对比与悬浮调节舱) -->
+    <div class="workspace-panel" id="convertWorkspace">
+      <div class="viewport squoosh-viewport" id="convertDropArea">
+        
+        <!-- 空状态：拖拽提示 -->
+        <div class="dropzone" id="convertDropPrompt">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          </svg>
+          <div class="dropzone-title">选择图片</div>
+        </div>
+
+        <!-- Squoosh 对比视窗 -->
+        <div class="squoosh-stage" id="squooshStage" style="display: none;">
+          <div class="squoosh-canvas-box" id="squooshCanvasBox">
+            
+            <!-- 原图层 (底图 / 左侧) -->
+            <div class="squoosh-layer layer-original">
+              <img id="imgOriginal" alt="Original">
+              <div class="squoosh-badge badge-left">
+                <span class="badge-tag">ORIGINAL</span>
+                <span class="badge-size" id="labelOriginalSize">0 KB</span>
+              </div>
+            </div>
+
+            <!-- 转换图层 (顶图 / 右侧通过 clip-path 裁剪显示) -->
+            <div class="squoosh-layer layer-compressed" id="compressedLayer">
+              <img id="imgCompressed" alt="Converted">
+              <div class="squoosh-badge badge-right">
+                <span class="badge-tag" id="labelTargetFmt">WEBP</span>
+                <span class="badge-size" id="labelTargetSize">计算中…</span>
+                <span class="badge-diff" id="labelSizeDiff">-0%</span>
+              </div>
+            </div>
+
+            <!-- 对比分割拖拽手柄 -->
+            <div class="squoosh-splitter" id="squooshSplitter">
+              <div class="splitter-line"></div>
+              <div class="splitter-handle" title="拖动对比原图与效果">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.5 7l-5 5 5 5V7zm7 10l5-5-5-5v10z"/>
+                </svg>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 转换底栏：上浮悬浮舱设计，空间极简从容 -->
+      <div class="control-dock disabled" id="convertDock">
+        
+        <!-- 1. 目标格式切换 -->
+        <div class="segmented-control" id="convertFormatGroup">
+          <button class="segment-btn active" data-fmt="webp">WEBP</button>
+          <button class="segment-btn" data-fmt="jpg">JPG</button>
+          <button class="segment-btn" data-fmt="png">PNG</button>
+          <button class="segment-btn" data-fmt="ico">ICO</button>
+        </div>
+
+        <!-- 2. 分辨率上浮调节舱 (悬停/点击触发) -->
+        <div class="dock-popover-item" id="resizePopoverWrap">
+          <button class="dock-trigger-btn" type="button" id="btnResizeTrigger">
+            <span class="trigger-label">分辨率:</span>
+            <span class="trigger-value" id="labelCurrentDim">0 × 0</span>
+            <svg class="trigger-arrow" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+            </svg>
+          </button>
+
+          <!-- 悬浮弹窗面板 -->
+          <div class="dock-popover-panel" id="resizePopoverPanel">
+            <div class="popover-title">重采样分辨率</div>
+            
+            <!-- 普通格式比例选择 -->
+            <div class="segmented-control" id="convertScaleGroup">
+              <button class="segment-btn active" data-scale="1">100%</button>
+              <button class="segment-btn" data-scale="0.75">75%</button>
+              <button class="segment-btn" data-scale="0.5">50%</button>
+              <button class="segment-btn" data-scale="0.25">25%</button>
+            </div>
+
+            <!-- ICO 模式预设尺寸 -->
+            <div class="segmented-control" id="convertIcoSizeGroup" style="display: none;">
+              <button class="segment-btn active" data-size="256">256</button>
+              <button class="segment-btn" data-size="128">128</button>
+              <button class="segment-btn" data-size="64">64</button>
+              <button class="segment-btn" data-size="32">32</button>
+              <button class="segment-btn" data-size="16">16</button>
+            </div>
+
+            <!-- 精确尺寸微调药丸 -->
+            <div class="dimension-pill" id="dimensionPill">
+              <input type="number" id="inputWidth" class="dim-input" value="0" min="1" max="16384">
+              <span class="dim-sep">X</span>
+              <input type="number" id="inputHeight" class="dim-input" value="0" min="1" max="16384">
+              <span class="dim-unit">px</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 质量滑块调节舱 (悬停/点击触发) -->
+        <div class="dock-popover-item" id="qualityPopoverWrap">
+          <button class="dock-trigger-btn" type="button" id="btnQualityTrigger">
+            <span class="trigger-label">质量:</span>
+            <span class="trigger-value" id="labelCurrentQuality">75%</span>
+            <svg class="trigger-arrow" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+            </svg>
+          </button>
+
+          <div class="dock-popover-panel" id="qualityPopoverPanel">
+            <div class="popover-title">输出画质</div>
+            <div class="param-cluster">
+              <input type="range" class="crf-slider" id="convertQuality" min="5" max="100" step="1" value="75">
+              <span class="meta-pill crf-badge" id="convertQualityLabel">75%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 动作按钮组 -->
+        <div class="action-group">
+          <button class="btn-secondary" id="convertReplaceBtn">更换图片</button>
+          <button class="btn-primary" id="convertDownloadBtn" disabled>导出</button>
+        </div>
       </div>
     </div>
 
@@ -168,6 +340,8 @@
   <script src="vendor/cropper.min.js"></script>
   <script src="js/features/crop.js"></script>
   <script src="js/features/snapshot.js"></script>
+  <script src="js/features/compress.js"></script>
+  <script src="js/features/convert.js"></script>
   <script src="js/app.js"></script>
 </body>
 
