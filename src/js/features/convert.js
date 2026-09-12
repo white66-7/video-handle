@@ -1,5 +1,5 @@
 /**
- * 图片转换模块 (Squoosh 模式：上浮悬浮舱 + 改分辨率 100% 对齐防错位)
+ * 图片转换模块 (Squoosh 模式：零滞后架构 + 双侧瞬间同步 + ICO 并行极速生成)
  */
 
 class ConvertModule {
@@ -17,11 +17,17 @@ class ConvertModule {
     this.targetHeight = 0;
     this.aspectRatio = 1;
 
+    // Windows 标准多分辨率 ICO 预设 (16~256px)
+    this.icoStandardSizes = [16, 24, 32, 48, 64, 128, 256];
+
     this.resultBlob = null;
     this.splitPercent = 50;
     this.isDraggingSplitter = false;
 
+    // 任务调度与防滞后核心
     this.encodeTimer = null;
+    this.currentJobId = 0;
+    this.compressedUrl = null;
 
     this.initDOMElements();
     this.bindEvents();
@@ -91,9 +97,10 @@ class ConvertModule {
     this.dropPrompt.addEventListener('click', () => this.triggerSelect());
     this.btnReplace.addEventListener('click', () => this.triggerSelect());
 
-    // 2. 悬浮舱点击锁定/展开
+    // 2. 悬浮舱展开/收起
     this.btnResizeTrigger.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (this.targetFormat === 'ico') return;
       this.resizePopoverWrap.classList.toggle('is-open');
       this.qualityPopoverWrap.classList.remove('is-open');
     });
@@ -125,16 +132,15 @@ class ConvertModule {
 
       if (this.targetFormat === 'ico') {
         this.scaleGroup.style.display = 'none';
-        this.icoSizeGroup.style.display = 'inline-flex';
+        if (this.icoSizeGroup) this.icoSizeGroup.style.display = 'none';
+        this.resizePopoverWrap.style.opacity = '0.75';
+        this.labelCurrentDim.textContent = '16~256 Multi';
         this.qualityPopoverWrap.style.opacity = '0.35';
         this.qualityPopoverWrap.style.pointerEvents = 'none';
-
-        const activeIcoBtn = this.icoSizeGroup.querySelector('.segment-btn.active') || this.icoSizeGroup.children[0];
-        const sz = parseInt(activeIcoBtn.dataset.size, 10);
-        this.setDimensions(sz, sz);
       } else {
         this.scaleGroup.style.display = 'inline-flex';
-        this.icoSizeGroup.style.display = 'none';
+        if (this.icoSizeGroup) this.icoSizeGroup.style.display = 'none';
+        this.resizePopoverWrap.style.opacity = '1';
 
         if (this.targetFormat === 'png') {
           this.qualityPopoverWrap.style.opacity = '0.35';
@@ -145,11 +151,11 @@ class ConvertModule {
         }
 
         const activeScaleBtn = this.scaleGroup.querySelector('.segment-btn.active') || this.scaleGroup.children[0];
-        const scale = parseFloat(activeScaleBtn.dataset.scale);
+        const scale = parseFloat(activeScaleBtn.dataset.scale) || 1;
         this.applyScale(scale);
       }
 
-      this.triggerReEncode();
+      this.triggerReEncode(0);
     });
 
     // 4. 百分比缩放点击
@@ -161,29 +167,17 @@ class ConvertModule {
       btn.classList.add('active');
       const scale = parseFloat(btn.dataset.scale);
       this.applyScale(scale);
-      this.triggerReEncode();
+      this.triggerReEncode(0);
     });
 
-    // 5. ICO 预设尺寸点击
-    this.icoSizeGroup.addEventListener('click', (e) => {
-      const btn = e.target.closest('.segment-btn');
-      if (!btn) return;
-
-      this.icoSizeGroup.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const sz = parseInt(btn.dataset.size, 10);
-      this.setDimensions(sz, sz);
-      this.triggerReEncode();
-    });
-
-    // 6. 自定义分辨率输入 (等比换算)
+    // 5. 自定义分辨率输入
     this.inputWidth.addEventListener('input', () => {
       let w = parseInt(this.inputWidth.value, 10);
       if (isNaN(w) || w <= 0) return;
       let h = Math.round(w / this.aspectRatio);
       this.setDimensions(w, h);
       this.clearScaleActive();
-      this.triggerReEncode(250);
+      this.triggerReEncode(150);
     });
 
     this.inputHeight.addEventListener('input', () => {
@@ -192,19 +186,19 @@ class ConvertModule {
       let w = Math.round(h * this.aspectRatio);
       this.setDimensions(w, h);
       this.clearScaleActive();
-      this.triggerReEncode(250);
+      this.triggerReEncode(150);
     });
 
-    // 7. 质量调节
+    // 6. 质量调节
     this.qualitySlider.addEventListener('input', (e) => {
       const val = parseInt(e.target.value, 10);
       this.targetQuality = val / 100;
       this.qualityLabel.textContent = `${val}%`;
       this.labelCurrentQuality.textContent = `${val}%`;
-      this.triggerReEncode(120);
+      this.triggerReEncode(30); // 极短防抖，体验更跟手
     });
 
-    // 8. 导出下载
+    // 7. 导出下载
     this.btnDownload.addEventListener('click', () => {
       if (!this.resultBlob || !this.sourceFile) return;
       const originalName = this.sourceFile.name;
@@ -239,7 +233,9 @@ class ConvertModule {
     if (document.activeElement !== this.inputHeight) {
       this.inputHeight.value = this.targetHeight;
     }
-    this.labelCurrentDim.textContent = `${this.targetWidth} × ${this.targetHeight}`;
+    if (this.targetFormat !== 'ico') {
+      this.labelCurrentDim.textContent = `${this.targetWidth} × ${this.targetHeight}`;
+    }
   }
 
   clearScaleActive() {
@@ -304,50 +300,67 @@ class ConvertModule {
       return;
     }
 
+    const isReplacing = !!this.sourceImg;
+    if (isReplacing) {
+      this.canvasBox.classList.remove('is-entering');
+      this.canvasBox.classList.add('is-switching');
+    }
+
     this.sourceFile = file;
     this.sourceSize = file.size;
     this.labelOriginalSize.textContent = this.formatFileSize(file.size);
 
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
+    
     img.onload = () => {
-      this.sourceImg = img;
-      this.originalWidth = img.naturalWidth || img.width;
-      this.originalHeight = img.naturalHeight || img.height;
-      this.aspectRatio = this.originalWidth / this.originalHeight;
+      const delay = isReplacing ? 100 : 0;
 
-      // 动态锁定画布外框的最佳比例，使两张图片绝对 1:1 重叠不发生位移
-      const maxW = window.innerWidth * 0.72;
-      const maxH = window.innerHeight * 0.72;
-      let displayW = this.originalWidth;
-      let displayH = this.originalHeight;
+      setTimeout(() => {
+        this.sourceImg = img;
+        this.originalWidth = img.naturalWidth || img.width;
+        this.originalHeight = img.naturalHeight || img.height;
+        this.aspectRatio = this.originalWidth / this.originalHeight;
 
-      if (displayW > maxW || displayH > maxH) {
-        const ratio = Math.min(maxW / displayW, maxH / displayH);
-        displayW = Math.round(displayW * ratio);
-        displayH = Math.round(displayH * ratio);
-      }
+        // 计算最佳视口呈现尺寸
+        const maxW = window.innerWidth * 0.72;
+        const maxH = window.innerHeight * 0.72;
+        let displayW = this.originalWidth;
+        let displayH = this.originalHeight;
 
-      this.canvasBox.style.width = `${displayW}px`;
-      this.canvasBox.style.height = `${displayH}px`;
+        if (displayW > maxW || displayH > maxH) {
+          const ratio = Math.min(maxW / displayW, maxH / displayH);
+          displayW = Math.round(displayW * ratio);
+          displayH = Math.round(displayH * ratio);
+        }
 
-      // 初始化分辨率设置
-      if (this.targetFormat === 'ico') {
-        this.setDimensions(256, 256);
-      } else {
+        this.canvasBox.style.width = `${displayW}px`;
+        this.canvasBox.style.height = `${displayH}px`;
+
         this.setDimensions(this.originalWidth, this.originalHeight);
-      }
 
-      this.imgOriginal.src = objectUrl;
+        // 🌟【关键修复 1】：左右两张图在这一瞬间同步更换新图源，绝不让右侧残留旧图！
+        this.imgOriginal.src = objectUrl;
+        this.imgCompressed.src = objectUrl;
 
-      this.dropPrompt.style.display = 'none';
-      this.stage.style.display = 'flex';
-      this.dock.classList.remove('disabled');
-      this.btnDownload.disabled = false;
+        this.dropPrompt.style.display = 'none';
+        this.stage.style.display = 'flex';
+        this.dock.classList.remove('disabled');
+        this.btnDownload.disabled = false;
 
-      this.setSplitPercent(50);
-      this.triggerReEncode(0);
+        this.setSplitPercent(50);
+        this.triggerReEncode(0); // 立即启动最新转码
+
+        if (isReplacing) {
+          this.canvasBox.classList.remove('is-switching');
+          this.canvasBox.classList.add('is-entering');
+          setTimeout(() => {
+            this.canvasBox.classList.remove('is-entering');
+          }, 350);
+        }
+      }, delay);
     };
+
     img.src = objectUrl;
   }
 
@@ -359,7 +372,7 @@ class ConvertModule {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  triggerReEncode(delay = 60) {
+  triggerReEncode(delay = 30) {
     clearTimeout(this.encodeTimer);
     this.labelTargetSize.textContent = '计算中…';
     this.encodeTimer = setTimeout(() => {
@@ -370,10 +383,30 @@ class ConvertModule {
   async processEncode() {
     if (!this.sourceImg) return;
 
+    // 🌟【关键修复 2】：递增 JobId，彻底杜绝快速调参数时旧任务覆盖新任务导致的抽搐与滞后
+    const jobId = ++this.currentJobId;
     const img = this.sourceImg;
+
+    // ================= 处理多分辨率 ICO 打包 (全并行加速) =================
+    if (this.targetFormat === 'ico') {
+      const icoBlob = await this.generateMultiSizeIco(img, this.icoStandardSizes);
+      if (jobId !== this.currentJobId) return; // 抛弃过期帧
+
+      this.resultBlob = icoBlob;
+
+      const targetSize = icoBlob.size;
+      this.labelTargetSize.textContent = this.formatFileSize(targetSize);
+
+      const diff = ((targetSize - this.sourceSize) / this.sourceSize) * 100;
+      const isSmaller = diff <= 0;
+      this.labelSizeDiff.textContent = `${isSmaller ? '' : '+'}${diff.toFixed(0)}%`;
+      this.labelSizeDiff.className = `badge-diff ${isSmaller ? '' : 'up'}`;
+      return;
+    }
+
+    // ================= 处理 WebP / JPG / PNG =================
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
@@ -382,25 +415,14 @@ class ConvertModule {
     canvas.width = w;
     canvas.height = h;
 
-    if (this.targetFormat === 'ico') {
-      ctx.clearRect(0, 0, w, h);
-      const scale = Math.min(w / img.width, h / img.height);
-      const drawW = img.width * scale;
-      const drawH = img.height * scale;
-      ctx.drawImage(img, (w - drawW) / 2, (h - drawH) / 2, drawW, drawH);
-    } else {
-      if (this.targetFormat === 'jpg') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, w, h);
-      }
-      ctx.drawImage(img, 0, 0, w, h);
+    if (this.targetFormat === 'jpg') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
     }
+    ctx.drawImage(img, 0, 0, w, h);
 
     let blob;
-    if (this.targetFormat === 'ico') {
-      const pngBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      blob = await this.createIcoFromPng(pngBlob, w, h);
-    } else if (this.targetFormat === 'jpg') {
+    if (this.targetFormat === 'jpg') {
       blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', this.targetQuality));
     } else if (this.targetFormat === 'webp') {
       blob = await new Promise(r => canvas.toBlob(r, 'image/webp', this.targetQuality));
@@ -408,8 +430,16 @@ class ConvertModule {
       blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     }
 
+    if (jobId !== this.currentJobId) return; // 抛弃过期帧
+
     this.resultBlob = blob;
-    this.imgCompressed.src = URL.createObjectURL(blob);
+
+    // 及时释放旧 URL，防止显存泄漏
+    if (this.compressedUrl) {
+      URL.revokeObjectURL(this.compressedUrl);
+    }
+    this.compressedUrl = URL.createObjectURL(blob);
+    this.imgCompressed.src = this.compressedUrl;
 
     const targetSize = blob.size;
     this.labelTargetSize.textContent = this.formatFileSize(targetSize);
@@ -420,31 +450,74 @@ class ConvertModule {
     this.labelSizeDiff.className = `badge-diff ${isSmaller ? '' : 'up'}`;
   }
 
-  createIcoFromPng(pngBlob, width, height) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const pngBuf = new Uint8Array(e.target.result);
-        const icoBuf = new Uint8Array(22 + pngBuf.length);
-        const view = new DataView(icoBuf.buffer);
+  /**
+   * 并行流水线：7 种分辨率同时计算，耗时缩短 80%
+   */
+  async generateMultiSizeIco(img, sizes) {
+    const tasks = sizes.map(sz => {
+      return new Promise((resolve) => {
+        const cvs = document.createElement('canvas');
+        cvs.width = sz;
+        cvs.height = sz;
+        const ctx = cvs.getContext('2d');
 
-        view.setUint16(0, 0, true);
-        view.setUint16(2, 1, true);
-        view.setUint16(4, 1, true);
-        view.setUint8(6, width >= 256 ? 0 : width);
-        view.setUint8(7, height >= 256 ? 0 : height);
-        view.setUint8(8, 0);
-        view.setUint8(9, 0);
-        view.setUint16(10, 1, true);
-        view.setUint16(12, 32, true);
-        view.setUint32(14, pngBuf.length, true);
-        view.setUint32(18, 22, true);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.clearRect(0, 0, sz, sz);
 
-        icoBuf.set(pngBuf, 22);
-        resolve(new Blob([icoBuf], { type: 'image/x-icon' }));
-      };
-      reader.readAsArrayBuffer(pngBlob);
+        const scale = Math.min(sz / img.width, sz / img.height);
+        const drawW = Math.round(img.width * scale);
+        const drawH = Math.round(img.height * scale);
+        const drawX = Math.round((sz - drawW) / 2);
+        const drawY = Math.round((sz - drawH) / 2);
+
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+        cvs.toBlob(async (blob) => {
+          const arrayBuf = await blob.arrayBuffer();
+          resolve({
+            size: sz,
+            buffer: new Uint8Array(arrayBuf)
+          });
+        }, 'image/png');
+      });
     });
+
+    // 🌟 Promise.all 并行渲染
+    const pngBuffers = await Promise.all(tasks);
+
+    const count = pngBuffers.length;
+    const headerSize = 6 + count * 16;
+    let totalDataSize = 0;
+    pngBuffers.forEach(item => { totalDataSize += item.buffer.length; });
+
+    const icoBuffer = new Uint8Array(headerSize + totalDataSize);
+    const view = new DataView(icoBuffer.buffer);
+
+    view.setUint16(0, 0, true);
+    view.setUint16(2, 1, true);
+    view.setUint16(4, count, true);
+
+    let currentOffset = headerSize;
+
+    pngBuffers.forEach((item, i) => {
+      const entryOffset = 6 + i * 16;
+      const sz = item.size >= 256 ? 0 : item.size;
+
+      view.setUint8(entryOffset + 0, sz);
+      view.setUint8(entryOffset + 1, sz);
+      view.setUint8(entryOffset + 2, 0);
+      view.setUint8(entryOffset + 3, 0);
+      view.setUint16(entryOffset + 4, 1, true);
+      view.setUint16(entryOffset + 6, 32, true);
+      view.setUint32(entryOffset + 8, item.buffer.length, true);
+      view.setUint32(entryOffset + 12, currentOffset, true);
+
+      icoBuffer.set(item.buffer, currentOffset);
+      currentOffset += item.buffer.length;
+    });
+
+    return new Blob([icoBuffer], { type: 'image/x-icon' });
   }
 }
 

@@ -48,6 +48,7 @@ body {
   color: var(--text-main);
   border-bottom: 1px solid var(--card-border);
   letter-spacing: 0.5px;
+  -webkit-app-region: drag; /* 允许拖拽窗口 */
 }
 
 .brand-icon {
@@ -104,6 +105,46 @@ body {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+}
+
+/* 1. 窗口右上角控制栏：强制最高层级与禁止拖拽 */
+.win-controls-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  z-index: 9999 !important; /* 确保层级最高 */
+  -webkit-app-region: no-drag !important;
+}
+
+/* 2. 按钮自身必须明确声明 no-drag，否则会被周围的 drag 区域吞掉点击 */
+.win-ctrl-btn {
+  width: 46px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-app-region: no-drag !important; /* 👈 必须加这一句 */
+  pointer-events: auto !important;
+}
+
+
+.win-ctrl-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+.win-ctrl-btn.win-close-btn:hover {
+  background-color: #e81123 !important;
+  color: #ffffff !important;
 }
 
 .workspace-panel {
@@ -731,8 +772,8 @@ body {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 16px;
-  background: #000000;
+  padding: 0;               /* 👈 关键：从 16px 改为 0，彻底去掉四周的黑边 */
+  background: var(--bg);     /* 👈 改为与全站一致的深色底色，不再是死黑色 */
 }
 
 .dropzone-sub {
@@ -749,8 +790,8 @@ body {
   display: flex;
   flex-direction: column;
   background: #0d0f14;
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
+  border: none;              /* 贴边后去掉外框线，更加一体化 */
+  border-radius: 0;          /* 贴边后去掉圆角 */
   overflow: hidden;
 }
 
@@ -790,6 +831,13 @@ body {
 
 .queue-item:hover {
   background: rgba(255, 255, 255, 0.03);
+}
+
+.queue-top-spacer {
+  height: 38px;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  margin-right: 140px; 
 }
 
 .item-name {
@@ -969,7 +1017,7 @@ body {
   text-align: center;
 }
 
-/* ================= Squoosh 视口核心（彻底解决改分辨率错位） ================= */
+/* ================= Squoosh 视口核心 ================= */
 
 .squoosh-viewport {
   width: 100%;
@@ -989,11 +1037,12 @@ body {
   justify-content: center;
   align-items: center;
   user-select: none;
+  overflow: hidden;
 }
 
+/* 🌟 画布外框过渡 */
 .squoosh-canvas-box {
   position: relative;
-  /* 尺寸由 JS 动态锁定为原图视口呈现尺寸，两图绝对共用一个外壳 */
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   border-radius: 4px;
   overflow: hidden;
@@ -1004,6 +1053,35 @@ body {
                     linear-gradient(-45deg, transparent 75%, #12141a 75%);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  transition: width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease;
+  will-change: width, height;
+}
+
+/* 切图离场与入场动效 */
+.squoosh-canvas-box.is-switching {
+  opacity: 0.15;
+  filter: blur(8px);
+  transform: scale(0.98);
+  transition: all 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes media-enter {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.98);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.squoosh-canvas-box.is-entering {
+  animation: media-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .squoosh-layer {
@@ -1018,7 +1096,6 @@ body {
   position: relative;
 }
 
-/* 关键修复：两张图片无论真实分辨率是多少，均填满统一尺寸的 box 容器 */
 .squoosh-layer img {
   display: block;
   width: 100%;
@@ -1033,31 +1110,32 @@ body {
   clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
 }
 
+/* 🌟 悬浮状态胶囊（左下/右下，绝不挡图） */
 .squoosh-badge {
   position: absolute;
-  bottom: 14px;
+  bottom: 20px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: rgba(13, 15, 20, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(18, 20, 26, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
-  z-index: 10;
+  z-index: 40;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .badge-left {
-  left: 14px;
+  left: 24px;
 }
 
 .badge-right {
-  right: 14px;
+  right: 24px;
 }
 
 .badge-tag {
@@ -1085,6 +1163,7 @@ body {
   color: #f87171;
 }
 
+/* 分割线与手柄 */
 .squoosh-splitter {
   position: absolute;
   top: 0;
@@ -1111,28 +1190,27 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background-color: #ffffff;
+  background-color: var(--player-accent);
   color: #0d0f14;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .splitter-handle svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 .squoosh-splitter:hover .splitter-handle,
 .squoosh-splitter.is-dragging .splitter-handle {
-  transform: translate(-50%, -50%) scale(1.15);
-  background-color: var(--player-accent);
-  color: #ffffff;
+  transform: translate(-50%, -50%) scale(1.18);
+  background-color: #ffffff;
 }
 
 /* ================= 底栏悬浮弹出舱 (Popover) 样式 ================= */
@@ -1187,7 +1265,6 @@ body {
   color: var(--player-accent);
 }
 
-/* 上浮面板主体 */
 .dock-popover-panel {
   position: absolute;
   bottom: 46px;
@@ -1209,7 +1286,6 @@ body {
   white-space: nowrap;
 }
 
-/* 隐形安全桥（防误触闪退） */
 .dock-popover-panel::before {
   content: '';
   position: absolute;
@@ -1220,7 +1296,6 @@ body {
   background: transparent;
 }
 
-/* 小三角形箭头 */
 .dock-popover-panel::after {
   content: '';
   position: absolute;
@@ -1232,7 +1307,6 @@ body {
   border-color: rgba(18, 20, 26, 0.96) transparent transparent;
 }
 
-/* 激活弹出状态 */
 .dock-popover-item:hover .dock-popover-panel,
 .dock-popover-item.is-open .dock-popover-panel {
   opacity: 1;
@@ -1248,7 +1322,6 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* 像素输入药丸容器 */
 .dimension-pill {
   display: inline-flex;
   align-items: center;
@@ -1299,4 +1372,10 @@ body {
   color: var(--text-sub);
   user-select: none;
   margin-left: 2px;
+}
+
+/* 按钮微反馈 */
+#convertReplaceBtn:active, #replaceBtn:active, #snapshotReplaceBtn:active {
+  transform: scale(0.95);
+  transition: transform 0.08s ease;
 }

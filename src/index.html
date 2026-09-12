@@ -44,6 +44,19 @@
   <!-- 右侧主处理区域 -->
   <div class="main-stage">
 
+    <!-- 右上角原生风格窗口控制按钮 -->
+    <div class="win-controls-bar">
+      <button class="win-ctrl-btn" id="winMinBtn" title="最小化">
+        <svg width="11" height="1" viewBox="0 0 11 1"><rect width="11" height="1" fill="currentColor"/></svg>
+      </button>
+      <button class="win-ctrl-btn" id="winMaxBtn" title="最大化 / 还原">
+        <svg width="10" height="10" viewBox="0 0 10 10"><rect width="9" height="9" x="0.5" y="0.5" fill="none" stroke="currentColor"/></svg>
+      </button>
+      <button class="win-ctrl-btn win-close-btn" id="winCloseBtn" title="关闭">
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+    </div>
+
     <!-- 顶部状态提示栏 -->
     <div class="notice" id="notice">
       <span class="notice-text" id="noticeText"></span>
@@ -172,12 +185,8 @@
         </div>
 
         <div class="compress-queue-wrap" id="compressQueueWrap" style="display: none;">
-          <div class="queue-header">
-            <div class="q-col col-name">视频文件 (<span id="queueCount" class="mono-num">0</span>)</div>
-            <div class="q-col col-spec">压制规格</div>
-            <div class="q-col col-status">处理进度</div>
-            <div class="q-col col-op">操作</div>
-          </div>
+          <div class="queue-top-spacer"></div>
+          <span id="queueCount" style="display: none;">0</span>
           <div class="queue-body" id="compressQueueList"></div>
         </div>
 
@@ -201,7 +210,7 @@
         <div class="action-group">
           <button class="btn-secondary" id="compressAddBtn">添加视频</button>
           <button class="btn-secondary" id="compressClearBtn">清空</button>
-          <button class="btn-primary" id="compressStartBtn" disabled>开始批量压缩</button>
+          <button class="btn-primary" id="compressStartBtn" disabled>开始压缩</button>
         </div>
       </div>
     </div>
@@ -220,25 +229,31 @@
 
         <!-- Squoosh 对比视窗 -->
         <div class="squoosh-stage" id="squooshStage" style="display: none;">
+
+          <!-- 视口左下角：原图信息胶囊 -->
+          <div class="squoosh-badge badge-left">
+            <span class="badge-tag">ORIGINAL</span>
+            <span class="badge-size" id="labelOriginalSize">0 KB</span>
+          </div>
+
+          <!-- 视口右下角：转换输出信息胶囊 -->
+          <div class="squoosh-badge badge-right">
+            <span class="badge-tag" id="labelTargetFmt">WEBP</span>
+            <span class="badge-size" id="labelTargetSize">计算中…</span>
+            <span class="badge-diff" id="labelSizeDiff">-0%</span>
+          </div>
+
+          <!-- 画布核心区 -->
           <div class="squoosh-canvas-box" id="squooshCanvasBox">
             
             <!-- 原图层 (底图 / 左侧) -->
             <div class="squoosh-layer layer-original">
               <img id="imgOriginal" alt="Original">
-              <div class="squoosh-badge badge-left">
-                <span class="badge-tag">ORIGINAL</span>
-                <span class="badge-size" id="labelOriginalSize">0 KB</span>
-              </div>
             </div>
 
             <!-- 转换图层 (顶图 / 右侧通过 clip-path 裁剪显示) -->
             <div class="squoosh-layer layer-compressed" id="compressedLayer">
               <img id="imgCompressed" alt="Converted">
-              <div class="squoosh-badge badge-right">
-                <span class="badge-tag" id="labelTargetFmt">WEBP</span>
-                <span class="badge-size" id="labelTargetSize">计算中…</span>
-                <span class="badge-diff" id="labelSizeDiff">-0%</span>
-              </div>
             </div>
 
             <!-- 对比分割拖拽手柄 -->
@@ -254,9 +269,9 @@
           </div>
         </div>
 
-      </div>
+      </div> <!-- 闭合 viewport -->
 
-      <!-- 转换底栏：上浮悬浮舱设计，空间极简从容 -->
+      <!-- 转换底栏：上浮悬浮舱设计 -->
       <div class="control-dock disabled" id="convertDock">
         
         <!-- 1. 目标格式切换 -->
@@ -332,10 +347,11 @@
           <button class="btn-secondary" id="convertReplaceBtn">更换图片</button>
           <button class="btn-primary" id="convertDownloadBtn" disabled>导出</button>
         </div>
-      </div>
-    </div>
+      </div> <!-- 闭合 convertDock -->
 
-  </div>
+    </div> <!-- 闭合 convertWorkspace -->
+
+  </div> <!-- 闭合 main-stage -->
 
   <script src="vendor/cropper.min.js"></script>
   <script src="js/features/crop.js"></script>

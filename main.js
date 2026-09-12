@@ -1,10 +1,11 @@
-const { app, BrowserWindow } = require('electron');
+// 1. 引入 ipcMain
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 
-// 引入拆分出来的各功能模块
 const { setupHardware, registerHardwareIPC } = require('./main/hardware');
 const { registerCropIPC } = require('./main/crop.handler');
 const { registerSnapshotIPC } = require('./main/snapshot.handler');
+const { registerCompressIPC } = require('./main/compress.handler');
 
 let mainWindow = null;
 
@@ -15,6 +16,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 650,
     show: false,
+    frame: false, 
     backgroundColor: '#090a0d',
     title: 'Cropper Studio',
     icon: path.join(__dirname, 'resources', 'icon.ico'),
@@ -34,10 +36,36 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 }
 
-// 注册所有模块的 IPC 通信
+ipcMain.on('window-min', () => {
+  if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.handle('shell:show-item', async (_event, fullPath) => {
+  if (fullPath) {
+    shell.showItemInFolder(fullPath); // 唤起 Windows 资源管理器并高亮该文件
+    return true;
+  }
+  return false;
+});
+
+ipcMain.on('window-max', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+
+ipcMain.on('window-close', () => {
+  if (mainWindow) mainWindow.close();
+});
+
 registerHardwareIPC();
 registerCropIPC(() => mainWindow);
 registerSnapshotIPC(() => mainWindow);
+registerCompressIPC(() => mainWindow);
 
 app.whenReady().then(() => {
   createWindow();

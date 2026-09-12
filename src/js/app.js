@@ -1,4 +1,24 @@
-// ================= 全局通知弹条 =================
+const winMinBtn = document.getElementById('winMinBtn');
+const winMaxBtn = document.getElementById('winMaxBtn');
+const winCloseBtn = document.getElementById('winCloseBtn');
+
+winMinBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  window.electronAPI?.minimizeWindow();
+});
+
+winMaxBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  window.electronAPI?.maximizeWindow();
+});
+
+winCloseBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  window.electronAPI?.closeWindow();
+});
+
+
+// 2. 全局通知弹条 (可在任何模块通过 window.showNotice('提示信息') 调用)
 window.showNotice = function (msg) {
   const notice = document.getElementById('notice');
   const noticeText = document.getElementById('noticeText');
@@ -11,7 +31,8 @@ document.getElementById('noticeClose')?.addEventListener('click', () => {
   if (notice) notice.style.display = 'none';
 });
 
-// ================= 左侧导航切栏 (裁切 / 截取 / 压缩 / 转换) =================
+
+// 3. 左侧导航切栏 (裁切 / 截取 / 压缩 / 转换)
 const tabCropBtn = document.getElementById('tabCropBtn');
 const tabSnapshotBtn = document.getElementById('tabSnapshotBtn');
 const tabCompressBtn = document.getElementById('tabCompressBtn');
@@ -43,13 +64,14 @@ tabSnapshotBtn?.addEventListener('click', () => switchTab(tabSnapshotBtn, snapsh
 tabCompressBtn?.addEventListener('click', () => switchTab(tabCompressBtn, compressWorkspace));
 tabConvertBtn?.addEventListener('click', () => switchTab(tabConvertBtn, convertWorkspace));
 
-// ================= 硬件状态灯监听 =================
+
+// 4. 硬件状态灯与 GPU 编码器监听
 const encoderInfo = document.getElementById('encoderInfo');
 const encoderLabel = document.getElementById('encoderLabel');
 
 function renderHardware(profile) {
   if (!profile || !profile.isReady || !encoderInfo || !encoderLabel) return;
-  window.currentHardwareProfile = profile;
+  window.currentHardwareProfile = profile; // 共享给压缩/转换模块使用
 
   encoderInfo.classList.remove('hw', 'cpu');
   if (profile.isHardware) {
@@ -60,31 +82,23 @@ function renderHardware(profile) {
     encoderInfo.classList.add('cpu');
     encoderLabel.innerText = profile.probeError ? 'CPU（硬件不可用）' : 'CPU (libx264)';
   }
+
   if (profile.probeError) {
     window.showNotice(`硬件加速不可用，已自动改用 CPU。原因：${profile.probeError}`);
   }
 }
 
-if (window.electronAPI && window.electronAPI.onHardwareProfileUpdated) {
+// 接收来自主进程的硬件配置检测
+if (window.electronAPI?.onHardwareProfileUpdated) {
   window.electronAPI.onHardwareProfileUpdated(renderHardware);
 }
-if (window.electronAPI && window.electronAPI.getHardwareProfile) {
+if (window.electronAPI?.getHardwareProfile) {
   window.electronAPI.getHardwareProfile().then(renderHardware);
 }
 
-// ================= 启动各个独立子模块 =================
-if (typeof window.initCropFeature === 'function') {
-  window.initCropFeature();
-}
 
-if (typeof window.initSnapshotFeature === 'function') {
-  window.initSnapshotFeature();
-}
-
-if (typeof window.initCompressFeature === 'function') {
-  window.initCompressFeature();
-}
-
-if (typeof window.initConvertFeature === 'function') {
-  window.initConvertFeature();
-}
+// 5. 启动各个独立子模块 (加 try-catch 隔离，单模块异常不影响其他功能)
+try { window.initCropFeature?.(); } catch (e) { console.error('[Crop Feature Init Error]:', e); }
+try { window.initSnapshotFeature?.(); } catch (e) { console.error('[Snapshot Feature Init Error]:', e); }
+try { window.initCompressFeature?.(); } catch (e) { console.error('[Compress Feature Init Error]:', e); }
+try { window.initConvertFeature?.(); } catch (e) { console.error('[Convert Feature Init Error]:', e); }
