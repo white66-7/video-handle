@@ -1,22 +1,26 @@
+<div align="center">
+
 # Cropper Studio
 
-**基于 Electron + FFmpeg 的轻量级本地媒体裁切工具**
+**基于 Electron + FFmpeg 的轻量级媒体处理工具**
 
-[![Electron](https://img.shields.io/badge/Electron-Latest-47848F.svg?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
-[![FFmpeg](https://img.shields.io/badge/FFmpeg-Core-007808.svg?style=flat-square&logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933.svg?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+<p>
+  <img src="https://img.shields.io/badge/Electron-Latest-47848F.svg?style=flat-square&logo=electron&logoColor=white" alt="Electron">
+  <img src="https://img.shields.io/badge/FFmpeg-Core-007808.svg?style=flat-square&logo=ffmpeg&logoColor=white" alt="FFmpeg">
+  <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/Node.js-18+-339933.svg?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License">
+</p>
 
-<p align="center">
+<p>
   <a href="#项目概述">项目概述</a> •
   <a href="#技术栈">技术栈</a> •
   <a href="#本地开发与构建">本地开发与构建</a>
 </p>
 
----
-
 </div>
+
+---
 
 ## 项目概述
 
@@ -32,7 +36,7 @@
 | **转码引擎** | FFmpeg |
 | **选区交互** | Cropper.js |
 | **界面与样式** | Vanilla JS + Modern CSS3 |
-| **系统调用** | Node.js (Child Process, Path, FS) |
+| **系统调用** | Node.js |
 
 ---
 
