@@ -3,9 +3,10 @@ const { ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const { resolveFFmpegPath } = require('./hardware'); // 👈 补上动态路径解析
 
 function registerCompressIPC(getMainWindow) {
-  // 1. 弹出让用户自选保存文件夹
+  // 1. 弹出自选保存文件夹
   ipcMain.handle('compress:select-output-dir', async () => {
     const win = getMainWindow();
     const result = await dialog.showOpenDialog(win, {
@@ -25,7 +26,7 @@ function registerCompressIPC(getMainWindow) {
     return false;
   });
 
-  // 3. 原生 FFmpeg 压制并统计产物体积
+  // 3. 原生 FFmpeg 压制
   ipcMain.handle('compress:run-task', async (_event, payload) => {
     const { taskId, inputPath, outputDir, fileName, crf, scaleFilter, hwProfile } = payload;
     const ext = path.extname(fileName) || '.mp4';
@@ -33,6 +34,7 @@ function registerCompressIPC(getMainWindow) {
     const outputPath = path.join(outputDir, `${baseName}_min${ext}`);
 
     const win = getMainWindow();
+    const ffmpegBin = resolveFFmpegPath(); // 👈 统一使用硬件检测模块给出的 FFmpeg 真实路径
 
     return new Promise((resolve) => {
       const args = ['-y', '-i', inputPath];
@@ -58,11 +60,13 @@ function registerCompressIPC(getMainWindow) {
 
       args.push('-c:a', 'aac', '-b:a', '128k', outputPath);
 
-      const ffmpegProcess = spawn('ffmpeg', args);
+      const ffmpegProcess = spawn(ffmpegBin, args, { windowsHide: true });
       let totalDurationSec = 0;
+      let stderrLog = '';
 
       ffmpegProcess.stderr.on('data', (data) => {
         const str = data.toString();
+        stderrLog += str;
 
         if (!totalDurationSec) {
           const durationMatch = str.match(/Duration:\s*(\d+):(\d+):(\d+\.\d+)/);
@@ -83,22 +87,24 @@ function registerCompressIPC(getMainWindow) {
       });
 
       ffmpegProcess.on('close', (code) => {
-        if (code === 0) {
-          // 👈 核心：读取压缩后文件的真实物理大小 (Bytes)
-          let outputSize = 0;
+        // 👈 核心防御：必须满足退出码为 0，且文件在磁盘真实存在且大小 > 0
+        if (code === 0 && fs.existsSync(outputPath)) {
           try {
-            outputSize = fs.statSync(outputPath).size;
+            const stats = fs.statSync(outputPath);
+            if (stats.size > 0) {
+              return resolve({ success: true, outputPath, outputSize: stats.size });
+            }
           } catch (e) {
-            console.error('获取输出文件大小失败:', e);
+            // 继续向下走失败逻辑
           }
-          resolve({ success: true, outputPath, outputSize });
-        } else {
-          resolve({ success: false, error: `FFmpeg 退出，错误码: ${code}` });
         }
+        
+        console.error('FFmpeg 压制失败日志:', stderrLog.slice(-500));
+        resolve({ success: false, error: `转码未生成有效文件 (退出码: ${code})` });
       });
 
       ffmpegProcess.on('error', (err) => {
-        resolve({ success: false, error: err.message });
+        resolve({ success: false, error: '无法启动 FFmpeg: ' + err.message });
       });
     });
   });

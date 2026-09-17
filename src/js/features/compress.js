@@ -153,9 +153,11 @@ class CompressModule {
   getScaleFilter(targetRes) {
     switch (targetRes) {
       case '1080p':
-        return "scale='min(1920,iw)':min'(1080,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
+        // 修正后：'min(1080,ih)' 的引号包裹在整个表达式外面
+        return "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
       case '720p':
-        return "scale='min(1280,iw)':min'(720,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
+        // 修正后：'min(720,ih)' 的引号包裹在整个表达式外面
+        return "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
       default:
         return "pad=ceil(iw/2)*2:ceil(ih/2)*2";
     }

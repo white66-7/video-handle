@@ -24,9 +24,44 @@ body {
   height: 100vh;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
 }
 
 /* ---------------- 左侧功能栏 ---------------- */
+.app-titlebar {
+  height: 48px;
+  width: 100%;
+  background: #0d0f14;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  z-index: 1000;
+}
+
+.brand-title {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+  -webkit-app-region: drag;
+}
+
+.app-body {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .sidebar {
   width: 190px;
   height: 100%;
@@ -35,20 +70,6 @@ body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-}
-
-.brand-title {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  border-bottom: 1px solid var(--card-border);
-  letter-spacing: 0.5px;
-  -webkit-app-region: drag; /* 允许拖拽窗口 */
 }
 
 .brand-icon {
@@ -107,22 +128,17 @@ body {
   position: relative;
 }
 
-/* 1. 窗口右上角控制栏：强制最高层级与禁止拖拽 */
 .win-controls-bar {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 38px;
+  height: 100%;
   display: flex;
   align-items: center;
-  z-index: 9999 !important; /* 确保层级最高 */
+  flex-shrink: 0;
   -webkit-app-region: no-drag !important;
 }
 
-/* 2. 按钮自身必须明确声明 no-drag，否则会被周围的 drag 区域吞掉点击 */
 .win-ctrl-btn {
   width: 46px;
-  height: 38px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,10 +148,9 @@ body {
   cursor: pointer;
   outline: none;
   transition: background-color 0.15s ease, color 0.15s ease;
-  -webkit-app-region: no-drag !important; /* 👈 必须加这一句 */
+  -webkit-app-region: no-drag !important;
   pointer-events: auto !important;
 }
-
 
 .win-ctrl-btn:hover {
   background-color: rgba(255, 255, 255, 0.08);
@@ -772,8 +787,8 @@ body {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 0;               /* 👈 关键：从 16px 改为 0，彻底去掉四周的黑边 */
-  background: var(--bg);     /* 👈 改为与全站一致的深色底色，不再是死黑色 */
+  padding: 0;
+  background: var(--bg);
 }
 
 .dropzone-sub {
@@ -790,8 +805,8 @@ body {
   display: flex;
   flex-direction: column;
   background: #0d0f14;
-  border: none;              /* 贴边后去掉外框线，更加一体化 */
-  border-radius: 0;          /* 贴边后去掉圆角 */
+  border: none;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -834,10 +849,7 @@ body {
 }
 
 .queue-top-spacer {
-  height: 38px;
-  flex-shrink: 0;
-  -webkit-app-region: drag;
-  margin-right: 140px; 
+  display: none;
 }
 
 .item-name {
@@ -1040,7 +1052,6 @@ body {
   overflow: hidden;
 }
 
-/* 🌟 画布外框过渡 */
 .squoosh-canvas-box {
   position: relative;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
@@ -1059,7 +1070,6 @@ body {
   will-change: width, height;
 }
 
-/* 切图离场与入场动效 */
 .squoosh-canvas-box.is-switching {
   opacity: 0.15;
   filter: blur(8px);
@@ -1110,7 +1120,6 @@ body {
   clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
 }
 
-/* 🌟 悬浮状态胶囊（左下/右下，绝不挡图） */
 .squoosh-badge {
   position: absolute;
   bottom: 20px;
@@ -1130,13 +1139,8 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-.badge-left {
-  left: 24px;
-}
-
-.badge-right {
-  right: 24px;
-}
+.badge-left { left: 24px; }
+.badge-right { right: 24px; }
 
 .badge-tag {
   font-weight: 700;
@@ -1163,7 +1167,6 @@ body {
   color: #f87171;
 }
 
-/* 分割线与手柄 */
 .squoosh-splitter {
   position: absolute;
   top: 0;
@@ -1374,8 +1377,820 @@ body {
   margin-left: 2px;
 }
 
-/* 按钮微反馈 */
 #convertReplaceBtn:active, #replaceBtn:active, #snapshotReplaceBtn:active {
   transform: scale(0.95);
   transition: transform 0.08s ease;
+}
+
+/* ================= 裁切视频模式特调 ================= */
+#cropWorkspace.is-video .cropper-bg,
+#cropWorkspace.is-video .cropper-container {
+  background: transparent !important;
+}
+
+#cropWorkspace.is-video .cropper-modal {
+  display: none !important;
+}
+
+#cropWorkspace.is-video .cropper-canvas img,
+#cropWorkspace.is-video .cropper-view-box img {
+  opacity: 0 !important;
+}
+
+#cropWorkspace.is-video .cropper-view-box {
+  outline: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.68) !important;
+}
+
+/* ================= 画面微型步进岛 (仅108px宽，极致轻巧) ================= */
+.crop-mini-stepper {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  height: 34px;
+  padding: 0 5px;
+  background: rgba(18, 20, 26, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.crop-mini-stepper.is-hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  pointer-events: none;
+}
+
+.mini-step-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mini-step-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.mini-step-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mini-play-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.mini-play-toggle:hover {
+  background: var(--player-accent);
+  color: #000;
+  box-shadow: 0 0 10px rgba(68, 191, 163, 0.5);
+}
+
+.mini-play-toggle input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  width: 0;
+  height: 0;
+}
+
+.mini-play-toggle .play-icon {
+  width: 10px;
+  height: 10px;
+  margin-left: 2px;
+}
+
+.mini-play-toggle .pause-icon {
+  width: 10px;
+  height: 10px;
+  display: none;
+}
+
+.mini-play-toggle input:checked ~ .play-icon {
+  display: none;
+}
+
+.mini-play-toggle input:checked ~ .pause-icon {
+  display: block;
+}
+
+/* ================= 🌟 补齐：一体化分层底栏与通栏时间轨样式 ================= */
+.crop-dock-pro {
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  height: 58px;
+  padding: 0 !important;
+  border-top: 1px solid var(--card-border);
+  background: var(--card);
+  transition: height 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  position: relative;
+  overflow: visible;
+}
+
+/* 视频模式下自适应变高展开通栏时间线 */
+#cropWorkspace.is-video .crop-dock-pro {
+  height: 86px;
+}
+
+.crop-timeline-strip {
+  width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.crop-integrated-slider {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  transition: height 0.15s ease, background-color 0.15s ease;
+}
+
+.crop-integrated-slider:hover {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.crop-integrated-slider .track-pin {
+  width: 12px;
+  height: 12px;
+  right: -6px;
+  top: -4px;
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+
+.crop-integrated-slider:hover .track-pin {
+  transform: scale(1);
+}
+
+.crop-dock-main {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.crop-left-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.crop-time-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.crop-time-text.current {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.crop-time-sep {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.crop-time-text.total {
+  color: var(--text-sub);
+}
+
+.crop-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* =========================================================
+   Cropper Studio · 裁切工作区 UI 重构
+   只作用于 #cropWorkspace，不影响截取 / 压缩 / 转换
+   ========================================================= */
+
+/* ---------- 1. 裁切底部 Dock：从“胶囊工具条”改成工作站控制台 ---------- */
+
+#cropWorkspace .crop-dock-pro {
+  height: 104px !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  background: #0d0f13 !important;
+  border-top: 1px solid #272a30 !important;
+  box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.18);
+  overflow: visible;
+}
+
+#cropWorkspace:not(.is-video) .crop-dock-pro {
+  height: 64px !important;
+}
+
+/* ---------- 2. 顶部时间轨 ---------- */
+
+#cropWorkspace .crop-timeline-strip {
+  width: 100%;
+  height: 40px !important;
+  flex: 0 0 40px;
+  padding: 0 22px !important;
+  display: flex;
+  align-items: center;
+  background: #111318 !important;
+  border-bottom: 1px solid #24272d !important;
+}
+
+#cropWorkspace .crop-integrated-slider {
+  width: 100%;
+  height: 6px !important;
+  margin: 0;
+  background: #2a2d33 !important;
+  border-radius: 3px !important;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+#cropWorkspace .crop-integrated-slider:hover {
+  height: 6px !important;
+  background: #33363d !important;
+}
+
+#cropWorkspace .crop-integrated-slider .track-progress {
+  background: #dfe3e8 !important;
+  border-radius: 3px;
+}
+
+#cropWorkspace .crop-integrated-slider .track-pin {
+  width: 14px !important;
+  height: 14px !important;
+  right: -7px !important;
+  top: -4px !important;
+  background: #f1f3f5 !important;
+  border: 2px solid #0d0f13;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.55), 0 2px 7px rgba(0,0,0,0.5);
+  transform: scale(0);
+}
+
+#cropWorkspace .crop-integrated-slider:hover .track-pin,
+#cropWorkspace .crop-integrated-slider:active .track-pin {
+  transform: scale(1);
+}
+
+#cropWorkspace .crop-timeline-strip .native-seeker {
+  cursor: ew-resize;
+}
+
+/* ---------- 3. 第二行重新分区：时间 / 音量 | 裁切参数 | 输出 ---------- */
+
+#cropWorkspace .crop-dock-main {
+  height: 64px;
+  min-height: 64px;
+  flex: 1 1 auto;
+  padding: 0 22px !important;
+  display: grid !important;
+  grid-template-columns: 188px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 24px;
+  background: #0d0f13 !important;
+}
+
+/* 左区：时间 + 音量，不再像两个独立胶囊 */
+#cropWorkspace .crop-left-info {
+  width: 188px;
+  min-width: 188px;
+  display: flex !important;
+  align-items: center;
+  gap: 18px;
+}
+
+#cropWorkspace .crop-time-box {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+#cropWorkspace .crop-time-text.current {
+  min-width: 55px;
+  color: #f2f3f5 !important;
+  font-weight: 600;
+  text-align: right;
+}
+
+#cropWorkspace .crop-time-sep {
+  color: #4b4f56 !important;
+  font-weight: 400;
+}
+
+#cropWorkspace .crop-time-text.total {
+  min-width: 55px;
+  color: #7d828b !important;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* 音量按钮改为普通 transport control */
+#cropWorkspace .audio-volume {
+  flex: 0 0 auto;
+}
+
+#cropWorkspace .volume-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 5px !important;
+  color: #8d929b;
+  background: transparent;
+}
+
+#cropWorkspace .volume-btn:hover,
+#cropWorkspace .audio-volume.is-open .volume-btn {
+  background: #1b1e23 !important;
+}
+
+#cropWorkspace .volume-icon {
+  width: 17px !important;
+  height: 17px !important;
+  color: #8d929b !important;
+}
+
+#cropWorkspace .volume-btn:hover .volume-icon,
+#cropWorkspace .audio-volume.is-open .volume-icon,
+#cropWorkspace .audio-volume.is-dragging .volume-icon {
+  color: #e6e8eb !important;
+}
+
+/* 中间故意留白，形成稳定的视觉呼吸 */
+#cropWorkspace .crop-right-actions {
+  grid-column: 3;
+  margin-left: 0 !important;
+  gap: 8px !important;
+  justify-self: end;
+}
+
+/* ---------- 4. 比例选择：从“圆角胶囊”改为编辑器式 segmented control ---------- */
+
+#cropWorkspace .crop-right-actions .segmented-control {
+  height: 32px;
+  padding: 2px !important;
+  gap: 1px !important;
+  border: 1px solid #2b2e34 !important;
+  border-radius: 5px !important;
+  background: #15171c !important;
+}
+
+#cropWorkspace .crop-right-actions .segment-btn {
+  height: 26px;
+  min-width: 48px;
+  padding: 0 11px !important;
+  border-radius: 3px !important;
+  color: #777c85 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+#cropWorkspace .crop-right-actions .segment-btn:hover {
+  color: #d8dbe0 !important;
+  background: #1d2025 !important;
+}
+
+#cropWorkspace .crop-right-actions .segment-btn.active {
+  color: #101215 !important;
+  background: #e6e8eb !important;
+}
+
+/* ---------- 5. 分辨率信息：不再做“meta-pill” ---------- */
+
+#cropWorkspace #metaInfo {
+  min-width: 96px;
+  height: 30px;
+  padding: 0 11px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #2b2e34 !important;
+  border-radius: 4px !important;
+  background: #12151a !important;
+  color: #8f949c !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ---------- 6. 操作按钮：统一高度、边界和权重 ---------- */
+
+#cropWorkspace #replaceBtn,
+#cropWorkspace #processBtn {
+  height: 32px !important;
+  min-width: 60px;
+  padding: 0 14px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+#cropWorkspace #replaceBtn {
+  color: #b0b4bb !important;
+  background: #15181d !important;
+  border: 1px solid #30333a !important;
+}
+
+#cropWorkspace #replaceBtn:hover {
+  color: #eceef1 !important;
+  background: #1c1f25 !important;
+  border-color: #454952 !important;
+}
+
+#cropWorkspace #processBtn {
+  min-width: 68px;
+  color: #111316 !important;
+  background: #e8eaed !important;
+  border: 1px solid #e8eaed !important;
+  box-shadow: none !important;
+}
+
+#cropWorkspace #processBtn:hover:not(:disabled) {
+  color: #08090a !important;
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(255,255,255,0.10) !important;
+}
+
+#cropWorkspace #processBtn:disabled {
+  color: #676c74 !important;
+  background: #24272c !important;
+  border-color: #24272c !important;
+  opacity: 1 !important;
+}
+
+/* ---------- 7. 音量弹层：去掉荧光绿和厚重阴影 ---------- */
+
+#cropWorkspace .volume-popup {
+  bottom: 42px;
+  width: 42px;
+  height: 126px;
+  border: 1px solid #30333a;
+  border-radius: 6px;
+  background: rgba(16, 18, 22, 0.98);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.38);
+  backdrop-filter: blur(14px);
+}
+
+#cropWorkspace .volume-popup::after {
+  border-color: rgba(16,18,22,0.98) transparent transparent;
+}
+
+#cropWorkspace .volume-track-slider {
+  width: 4px;
+  height: 92px;
+  background: #343840;
+  border-radius: 2px;
+}
+
+#cropWorkspace .volume-track-progress {
+  background: #d9dde2 !important;
+  box-shadow: none !important;
+}
+
+#cropWorkspace .volume-track-pin {
+  width: 12px;
+  height: 12px;
+  left: -4px;
+  background: #f2f3f5;
+  border: 2px solid #181a1f;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+}
+
+/* ---------- 8. 画面上的逐帧控制岛：做成真正的 transport 控件 ---------- */
+
+#cropWorkspace .crop-mini-stepper {
+  bottom: 18px !important;
+  left: 50%;
+  height: 38px !important;
+  padding: 3px !important;
+  gap: 2px !important;
+  background: rgba(13, 15, 19, 0.92) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  border-radius: 7px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.42) !important;
+  backdrop-filter: blur(14px);
+}
+
+#cropWorkspace .crop-mini-stepper .mini-step-btn {
+  width: 31px !important;
+  height: 31px !important;
+  border-radius: 4px !important;
+  color: #8e939b !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-step-btn:hover {
+  color: #f1f3f5 !important;
+  background: #1e2126 !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-play-toggle {
+  width: 31px !important;
+  height: 31px !important;
+  border-radius: 4px !important;
+  color: #111316 !important;
+  background: #e4e7eb !important;
+  box-shadow: none !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-play-toggle:hover {
+  color: #08090a !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 9. 非视频图片裁切：保持单层、避免出现空的时间 Dock ---------- */
+
+#cropWorkspace:not(.is-video) .crop-dock-main {
+  min-height: 64px;
+}
+
+#cropWorkspace:not(.is-video) .crop-right-actions {
+  grid-column: 3;
+}
+
+/* ---------- 10. 小窗口：右侧参数允许自然收缩 ---------- */
+
+@media (max-width: 900px) {
+  #cropWorkspace .crop-dock-main {
+    grid-template-columns: 160px minmax(0, 1fr) auto;
+    column-gap: 14px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  #cropWorkspace .crop-left-info {
+    width: 160px;
+    min-width: 160px;
+    gap: 10px;
+  }
+
+  #cropWorkspace .crop-right-actions {
+    gap: 5px !important;
+  }
+
+  #cropWorkspace .crop-right-actions .segment-btn {
+    min-width: 40px;
+    padding: 0 7px !important;
+  }
+
+  #cropWorkspace #metaInfo {
+    display: none;
+  }
+}
+
+
+/* =========================================================
+   Cropper Studio · 最终修正：播放 / 逐帧控件归入 Dock
+   ========================================================= */
+
+#cropWorkspace .crop-mini-stepper {
+  position: static !important;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  align-self: center;
+  transform: none !important;
+  width: auto !important;
+  height: 36px !important;
+  margin: 0 !important;
+  padding: 2px !important;
+  display: flex;
+  align-items: center;
+  gap: 2px !important;
+  background: #12151a !important;
+  border: 1px solid #292d33 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.24) !important;
+  backdrop-filter: none !important;
+  opacity: 1;
+  z-index: 1;
+}
+
+/* 原来的 is-hidden 仅保留显隐逻辑，不再移动控件 */
+#cropWorkspace .crop-mini-stepper.is-hidden {
+  opacity: 1 !important;
+  visibility: hidden;
+  pointer-events: none;
+  transform: none !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-step-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 4px !important;
+  color: #8d929a !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-step-btn:hover {
+  color: #f1f3f5 !important;
+  background: #1e2228 !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-play-toggle {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 4px !important;
+  color: #101216 !important;
+  background: #e4e7eb !important;
+  box-shadow: none !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-play-toggle:hover {
+  background: #ffffff !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-step-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+#cropWorkspace .crop-mini-stepper .mini-play-toggle .play-icon,
+#cropWorkspace .crop-mini-stepper .mini-play-toggle .pause-icon {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+/* 视频模式时居中放在 Dock 第二行 */
+#cropWorkspace.is-video .crop-mini-stepper {
+  visibility: visible;
+}
+
+@media (max-width: 900px) {
+  #cropWorkspace .crop-mini-stepper {
+    grid-column: 2;
+  }
+}
+
+/* =========================================================
+   Cropper Studio · 四界面统一 Segmented Control 滑动动画 (完美修复版)
+   - 彻底修复位移错位、移动距离不足的计算错误
+   - 零修改 DOM / 零修改 JS，纯 CSS 完美滑动
+   ========================================================= */
+
+.segmented-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  --segment-pad: 3px;
+  --segment-gap: 2px;
+  padding: var(--segment-pad) !important;
+  gap: var(--segment-gap) !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 1. 核心关键：必须强制所有选项等宽，滑块底板才能绝对贴合 */
+.segmented-control .segment-btn {
+  flex: 1 1 0%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  text-align: center;
+  white-space: nowrap;
+  padding: 6px 12px !important;
+  transition: color 0.22s ease-in-out, opacity 0.22s ease-in-out;
+}
+
+.segmented-control .segment-btn.active {
+  color: #101215 !important;
+  background: transparent !important;
+}
+
+/* 2. 通用滑动指示器底板 */
+.segmented-control::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: var(--segment-pad);
+  left: var(--segment-pad);
+  height: calc(100% - (var(--segment-pad) * 2));
+  border-radius: 5px;
+  background: #e6e8eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  transform: translateX(0);
+  opacity: 1;
+  transition:
+    transform 0.32s cubic-bezier(0.35, 0, 0.15, 1),
+    width 0.32s cubic-bezier(0.35, 0, 0.15, 1),
+    opacity 0.2s ease-in-out;
+  /* 默认宽度基准：4 项 */
+  width: calc((100% - (var(--segment-pad) * 2) - (3 * var(--segment-gap))) / 4);
+}
+
+/* 3. 自适应不同项数的宽度 */
+/* 3 项：压缩分辨率 (1080P / 720P / 原始尺寸) */
+.segmented-control:has(.segment-btn:nth-child(3):last-child)::before {
+  width: calc((100% - (var(--segment-pad) * 2) - (2 * var(--segment-gap))) / 3);
+}
+
+/* 4 项：裁切比例、格式切换、缩放切换 */
+.segmented-control:has(.segment-btn:nth-child(4):last-child)::before {
+  width: calc((100% - (var(--segment-pad) * 2) - (3 * var(--segment-gap))) / 4);
+}
+
+/* 5 项：ICO 预设尺寸 (256 / 128 / 64 / 32 / 16) */
+.segmented-control:has(.segment-btn:nth-child(5):last-child)::before {
+  width: calc((100% - (var(--segment-pad) * 2) - (4 * var(--segment-gap))) / 5);
+}
+
+/* 4. 通用连续滑动动画（利用自身宽度 100% + gap，对 3/4/5 项完全通用，绝不错位） */
+.segmented-control:has(.segment-btn:nth-child(1).active)::before {
+  transform: translateX(0);
+}
+
+.segmented-control:has(.segment-btn:nth-child(2).active)::before {
+  transform: translateX(calc(100% + var(--segment-gap)));
+}
+
+.segmented-control:has(.segment-btn:nth-child(3).active)::before {
+  transform: translateX(calc(200% + (var(--segment-gap) * 2)));
+}
+
+.segmented-control:has(.segment-btn:nth-child(4).active)::before {
+  transform: translateX(calc(300% + (var(--segment-gap) * 3)));
+}
+
+.segmented-control:has(.segment-btn:nth-child(5).active)::before {
+  transform: translateX(calc(400% + (var(--segment-gap) * 4)));
+}
+
+/* 5. 裁切专属微调（仅覆盖内边距和圆角变量，位移逻辑自动适配） */
+#cropWorkspace .crop-right-actions .segmented-control {
+  --segment-pad: 2px;
+  --segment-gap: 1px;
+}
+
+#cropWorkspace .crop-right-actions .segmented-control::before {
+  border-radius: 3px;
+}
+
+#cropWorkspace .crop-right-actions .segment-btn {
+  height: 26px !important;
+  padding: 0 10px !important;
+}
+
+/* 未激活时淡出隐藏 */
+.segmented-control:not(:has(.segment-btn.active))::before {
+  opacity: 0;
+}
+
+/* 系统减弱动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .segmented-control::before,
+  .segmented-control .segment-btn {
+    transition: none !important;
+  }
 }

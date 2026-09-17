@@ -11,40 +11,13 @@
 
 <body>
 
-  <!-- 左侧功能导航 -->
-  <aside class="sidebar">
+  <header class="app-titlebar">
     <div class="brand-title">
       <img src="../resources/icon.ico" class="brand-icon" alt="icon">
       <span>Cropper Studio</span>
     </div>
 
-    <nav class="nav-tabs">
-      <button class="nav-tab-btn active" id="tabCropBtn">
-        <span>裁切</span>
-      </button>
-      <button class="nav-tab-btn" id="tabSnapshotBtn">
-        <span>截取</span>
-      </button>
-      <button class="nav-tab-btn" id="tabCompressBtn">
-        <span>压缩</span>
-      </button>
-      <button class="nav-tab-btn" id="tabConvertBtn">
-        <span>转换</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="encoder-pill" id="encoderInfo">
-        <span class="dot"></span>
-        <span id="encoderLabel">检测中…</span>
-      </div>
-    </div>
-  </aside>
-
-  <!-- 右侧主处理区域 -->
-  <div class="main-stage">
-
-    <!-- 右上角原生风格窗口控制按钮 -->
+    <!-- 把原本在 main-stage 里的这个 win-controls-bar 剪切到这里 -->
     <div class="win-controls-bar">
       <button class="win-ctrl-btn" id="winMinBtn" title="最小化">
         <svg width="11" height="1" viewBox="0 0 11 1"><rect width="11" height="1" fill="currentColor"/></svg>
@@ -56,6 +29,37 @@
         <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor" stroke-width="1.2"/></svg>
       </button>
     </div>
+  </header>
+
+    <div class="app-body">
+
+    <!-- 补回刚才误删的左侧功能栏 -->
+    <aside class="sidebar">
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" id="tabCropBtn">
+          <span>裁切</span>
+        </button>
+        <button class="nav-tab-btn" id="tabSnapshotBtn">
+          <span>截取</span>
+        </button>
+        <button class="nav-tab-btn" id="tabCompressBtn">
+          <span>压缩</span>
+        </button>
+        <button class="nav-tab-btn" id="tabConvertBtn">
+          <span>转换</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="encoder-pill" id="encoderInfo">
+          <span class="dot"></span>
+          <span id="encoderLabel">检测中…</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧主处理区域 -->
+    <div class="main-stage">
 
     <!-- 顶部状态提示栏 -->
     <div class="notice" id="notice">
@@ -63,20 +67,80 @@
       <button class="notice-close" id="noticeClose" title="关闭">×</button>
     </div>
 
-    <!-- 1. 裁切独立工作区 -->
-    <div class="workspace-panel active" id="cropWorkspace">
-      <div class="viewport" id="cropDropArea">
-        <div class="dropzone" id="cropDropzonePrompt">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
-          </svg>
-          <div class="dropzone-title">选择文件</div>
+<!-- 1. 裁切独立工作区 -->
+<div class="workspace-panel active" id="cropWorkspace">
+  
+  <div class="viewport" id="cropDropArea">
+    <div class="dropzone" id="cropDropzonePrompt">
+      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" /></svg>
+      <div class="dropzone-title">选择文件</div>
+    </div>
+    <video id="cropVideo" style="display: none; position: absolute; outline: none; pointer-events: none; z-index: 0;"></video>
+    <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
+
+  </div>
+
+  <!-- 底部一体化面板 -->
+  <div class="control-dock crop-dock-pro disabled" id="cropDock">
+    
+    <!-- 顶部通栏时间轨 -->
+    <div class="crop-timeline-strip" id="cropTimelineStrip" style="display: none;">
+      <div class="track-slider crop-integrated-slider" id="cropTimelineSlider">
+        <div class="track-progress" id="cropVideoProgress" style="width: 0%;">
+          <div class="track-pin" id="cropProgressPin"></div>
         </div>
-        <img id="image" style="display: none; max-width: 100%; max-height: 100%;">
+        <input type="range" class="native-seeker" id="cropVideoSeeker" min="0" max="100" step="0.001" value="0">
+      </div>
+    </div>
+
+    <!-- 底部功能栏 -->
+    <div class="crop-dock-main">
+      <!-- 视频播放控制：固定在底部操作栏，不再覆盖视频画面 -->
+    <div class="crop-mini-stepper" id="cropMiniStepper" style="display: none;">
+      <button class="mini-step-btn" id="cropBtnPrevFrame" title="后退一帧 (←)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.354 3.646a.5.5 0 0 1 0 .708L7.207 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z"/></svg>
+      </button>
+
+      <label class="mini-play-toggle" title="播放 / 暂停 (空格)">
+        <input type="checkbox" id="cropBtnPlayPause" />
+        <svg class="play-icon" viewBox="0 0 384 512" fill="currentColor"><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"></path></svg>
+        <svg class="pause-icon" viewBox="0 0 320 512" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"></path></svg>
+      </label>
+
+      <button class="mini-step-btn" id="cropBtnNextFrame" title="前进一帧 (→)">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 3.646a.5.5 0 0 0 0 .708L8.793 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z"/></svg>
+      </button>
+    </div>
+      <!-- 左侧：时间与音量 -->
+      <div class="crop-left-info" id="cropLeftInfo" style="display: none;">
+        <div class="crop-time-box">
+          <span class="crop-time-text current" id="cropCurrentTime">00:00.00</span>
+          <span class="crop-time-sep">/</span>
+          <span class="crop-time-text total" id="cropTotalTime">00:00.00</span>
+        </div>
+
+        <div class="audio-volume" id="cropVolumeWrapper">
+          <button class="volume-btn" id="cropVolumeBtn" type="button" title="音量">
+            <svg class="volume-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.36 19.36a1 1 0 0 1-.705-1.71C19.167 16.148 20 14.142 20 12s-.833-4.148-2.345-5.65a1 1 0 1 1 1.41-1.419C20.958 6.812 22 9.322 22 12s-1.042 5.188-2.935 7.069a.997.997 0 0 1-.705.291z"></path>
+              <path d="M15.53 16.53a.999.999 0 0 1-.703-1.711C15.572 14.082 16 13.054 16 12s-.428-2.082-1.173-2.819a1 1 0 1 1 1.406-1.422A6 6 0 0 1 18 12a6 6 0 0 1-1.767 4.241.996.996 0 0 1-.703.289zM12 22a1 1 0 0 1-.707-.293L6.586 17H4c-1.103 0-2-.897-2-2V9c0-1.103.897-2 2-2h2.586l4.707-4.707A.998.998 0 0 1 13 3v18a1 1 0 0 1-1 1z"></path>
+            </svg>
+          </button>
+          <div class="volume-popup" id="cropVolumePopup">
+            <div class="volume-slider-box">
+              <div class="volume-track-slider">
+                <div class="volume-track-progress" id="cropVolumeProgress" style="height: 100%;">
+                  <div class="volume-track-pin" id="cropVolumePin"></div>
+                </div>
+                <input type="range" class="native-volume-seeker" id="cropVolumeSeeker" min="0" max="1" step="0.01" value="1" orient="vertical">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="control-dock disabled" id="cropDock">
+      <!-- 右侧：裁切参数与导出 -->
+      <div class="action-group crop-right-actions">
         <div class="segmented-control">
           <button class="segment-btn active" id="btn16x9">16 : 9</button>
           <button class="segment-btn" id="btn1x1">1 : 1</button>
@@ -85,14 +149,13 @@
         </div>
 
         <div class="meta-pill" id="metaInfo">0 X 0 px</div>
-
-        <div class="action-group">
-          <button class="btn-secondary" id="replaceBtn">更换</button>
-          <button class="btn-primary" id="processBtn" disabled>导出</button>
-        </div>
+        <button class="btn-secondary" id="replaceBtn">更换</button>
+        <button class="btn-primary" id="processBtn" disabled>导出</button>
       </div>
     </div>
 
+  </div>
+</div>
     <!-- 2. 截取独立工作区 -->
     <div class="workspace-panel" id="snapshotWorkspace">
       <div class="viewport" id="snapshotDropArea">
@@ -350,9 +413,10 @@
       </div> <!-- 闭合 convertDock -->
 
     </div> <!-- 闭合 convertWorkspace -->
+    
 
   </div> <!-- 闭合 main-stage -->
-
+  </div>
   <script src="vendor/cropper.min.js"></script>
   <script src="js/features/crop.js"></script>
   <script src="js/features/snapshot.js"></script>
