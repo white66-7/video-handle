@@ -1,6 +1,6 @@
 {
   "name": "video-studio",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "视频处理工具",
   "main": "main.js",
   "scripts": {

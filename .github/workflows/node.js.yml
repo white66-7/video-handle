@@ -1,13 +1,19 @@
 name: Build and Release Electron App
 
 on:
+  # 本地打 Tag 并推送时自动触发构建
+  push:
+    tags:
+      - 'v*'
+  # 在 GitHub 网页 Actions 页面手动点击 Run workflow 触发
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号,例:v1.0.0'
+        description: '发布版本号（例如 v1.0.2）'
         required: true
-        default: 'v1.0.1'
+        default: 'v1.0.2'
 
+# 赋予创建 Release 和上传附件的写入权限
 permissions:
   contents: write
 
@@ -16,10 +22,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          lfs: true 
+          fetch-depth: 0
+          lfs: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,18 +37,22 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 解压本地特定版本的 ffmpeg.zip，并清理 zip 文件避免安装包体积过大
       - name: Extract local ffmpeg.zip
         shell: pwsh
         run: |
 
+      # 构建 Windows 安装包
       - name: Build Windows package
         run: npm run build:win
 
+      # 发布 Release 并读取 CHANGELOG.md 作为更新说明
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: Release ${{ github.event.inputs.version }}
+          tag_name: ${{ inputs.version || github.ref_name }}
+          name: "Video Handle ${{ inputs.version || github.ref_name }}"
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
           files: dist/*.exe
