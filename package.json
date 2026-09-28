@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "com.cropper.studio",
-    "productName": "Cropper Studio Pro",
+    "productName": "video handle",
     "directories": {
       "output": "dist"
     },
