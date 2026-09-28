@@ -1,12 +1,17 @@
 name: Build and Release Electron App
 
 on:
+  # 本地打 Tag 并推送时自动触发构建（如 git push origin v1.0.2）
+  push:
+    tags:
+      - 'v*'
+  # 在 GitHub 网页 Actions 页面手动点击 Run workflow 触发
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号,例:v1.0.0'
+        description: '发布版本号(例 v1.0.2)'
         required: true
-        default: 'v1.0.1'
+        default: 'v1.0.2'
 
 # 赋予创建 Release 和上传附件的写入权限
 permissions:
@@ -30,28 +35,24 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # 解压本地特定版本的 ffmpeg.zip，并清理 zip 文件避免安装包体积过大
       - name: Extract local ffmpeg.zip
         shell: pwsh
         run: |
-          Expand-Archive -Path bin/ffmpeg.zip -DestinationPath bin/tmp -Force
-          $exe = Get-ChildItem -Path bin/tmp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
-          Copy-Item $exe.FullName -Destination bin/ffmpeg.exe -Force
-          Remove-Item -Recurse -Force bin/tmp
-          Remove-Item -Force bin/ffmpeg.zip
-          Get-ChildItem bin
 
       # 构建 Windows 安装包
       - name: Build Windows package
         run: npm run build:win
 
+      # 发布 Release 并读取 CHANGELOG.md 作为更新说明
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: Release ${{ github.event.inputs.version }}
+          tag_name: ${{ inputs.version || github.ref_name }}
+          name: "Video Handle ${{ inputs.version || github.ref_name }}"
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
           files: dist/*.exe
