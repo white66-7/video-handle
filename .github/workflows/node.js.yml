@@ -37,10 +37,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 解压本地 ffmpeg.zip
       - name: Extract local ffmpeg.zip
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          Expand-Archive -Path bin/ffmpeg.zip -DestinationPath bin/tmp -Force
+          $exe = Get-ChildItem -Path bin/tmp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          Copy-Item $exe.FullName -Destination bin/ffmpeg.exe -Force
+          Remove-Item -Recurse -Force bin/tmp
+          Remove-Item -Force bin/ffmpeg.zip
 
+      # 构建 Windows 安装包
       - name: Build Windows package
         run: npm run build:win
 
@@ -50,6 +58,22 @@ jobs:
         env:
           CURRENT_VERSION: ${{ inputs.version || github.ref_name }}
         run: |
+          const fs = require('fs');
+          if (!fs.existsSync('CHANGELOG.md')) {
+            fs.writeFileSync('CURRENT_RELEASE_NOTES.md', '常规更新与优化');
+            process.exit(0);
+          }
+          const content = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const version = process.env.CURRENT_VERSION.replace(/^[vV]/, '').trim();
+          
+          // 正则匹配：只提取当前 ## 版本的说明，遇到下一个 ## 就停止
+          const regex = new RegExp(`##\\s*\\[?[vV]?${version}\\]?[^\\n]*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+          const match = content.match(regex);
+          
+          const notes = (match && match[1]) ? match[1].trim() : `Release ${process.env.CURRENT_VERSION}`;
+          fs.writeFileSync('CURRENT_RELEASE_NOTES.md', notes);
+          console.log('--- 成功提取当前版本内容 ---');
+          console.log(notes);
 
       # 发布 Release 并仅包含当前版本的说明
       - name: Upload to Release
@@ -57,7 +81,6 @@ jobs:
         with:
           tag_name: ${{ inputs.version || github.ref_name }}
           name: "Video Handle ${{ inputs.version || github.ref_name }}"
-          # 只读取切出来的当前版本日志
           body_path: CURRENT_RELEASE_NOTES.md
           draft: false
           prerelease: false
