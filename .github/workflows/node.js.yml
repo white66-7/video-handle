@@ -1,11 +1,11 @@
 name: Build and Release Electron App
 
 on:
-  # 模式 1：本地推送以 'v' 开头的 tag 时自动触发（如 v1.0.2）
+  # 本地打 Tag 推送时触发（如 git push origin v1.0.2）
   push:
     tags:
       - 'v*'
-  # 模式 2：保留网页端手动触发选项（备用）
+  # 网页端手动点击 Run workflow 触发
   workflow_dispatch:
     inputs:
       version:
@@ -13,7 +13,7 @@ on:
         required: true
         default: 'v1.0.2'
       release_notes:
-        description: '手动输入的更新说明（选填）'
+        description: '更新说明日志（选填）'
         required: false
         default: '常规更新与 Bug 修复'
 
@@ -25,7 +25,6 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # fetch-depth: 0 保证拉取完整的 Git 历史和 Tag 信息
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -39,7 +38,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Extract local ffmpeg.zip
         shell: pwsh
@@ -49,21 +48,18 @@ jobs:
           Copy-Item $exe.FullName -Destination bin/ffmpeg.exe -Force
           Remove-Item -Recurse -Force bin/tmp
           Remove-Item -Force bin/ffmpeg.zip
+          Get-ChildItem bin
 
       - name: Build Windows package
         run: npm run build:win
-
-      # 关键步骤：解析版本号和本地写入的更新说明
-      - name: Parse Tag and Release Notes
-        id: release_info
-        shell: pwsh
-        run: |
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release_info.outputs.version }}
-          name: "Video Handle ${{ steps.release_info.outputs.version }}"
-          body: ${{ steps.release_info.outputs.notes }}
+          # 如果是手动点击取 inputs.version，如果是推 Tag 自动取 Tag 名（如 v1.0.2）
+          tag_name: ${{ inputs.version || github.ref_name }}
+          name: "Video Handle ${{ inputs.version || github.ref_name }}"
+          body: ${{ inputs.release_notes }}
+          # 自动汇总生成更新日志（包含本次发布的所有 commit 说明）
           generate_release_notes: true
           draft: false
           prerelease: false
